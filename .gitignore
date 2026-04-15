@@ -35,3 +35,6 @@ coverage/
 # Misc
 *.tgz
 *.swp
+
+# Local backups
+.git-backups/
