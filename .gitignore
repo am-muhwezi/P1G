@@ -1,0 +1,44 @@
+#Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*__pycache__/
+
+# Env files
+.env
+.env.example
+
+# Database
+server/data/
+
+# Design / junk
+DESIGN.md
+arch.md
+architecture.md
+*.zip
+stitch_p1g_kataale_marketplace_design_system/
+stitch_p1g_kataale_marketplace_ui (4)/
+Downtown Shoppers.html
+Downtown Shoppers_files/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# OpenCode
+.opencode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+*.db
