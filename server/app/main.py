@@ -9,9 +9,13 @@ load_dotenv()
 
 app = FastAPI(title="P1G Kataale — Waitlist API", version="0.1.0")
 
+origins = os.getenv("ALLOWED_ORIGINS")
+if not origins:
+    raise RuntimeError("ALLOWED_ORIGINS env var is required. Set it to a comma-separated list of allowed origins.")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=os.getenv("ALLOWED_ORIGINS", "http://localhost:5173,http://localhost:3000").split(","),
+    allow_origins=origins.split(","),
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
