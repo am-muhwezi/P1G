@@ -3,7 +3,7 @@ export function TrustSection() {
     <section className="bg-surface-container py-20 dark:bg-surface-container">
       <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop">
         <div className="text-center mb-16">
-          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4 dark:text-primary-fixed">Why P1G Kataale?</h2>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface mb-4 dark:text-primary-fixed">Why P1G katale?</h2>
           <p className="text-on-surface-variant font-body-lg text-body-lg max-w-2xl mx-auto dark:text-outline-variant">
             We bridge the gap between rural farmers and commercial buyers through transparency and security.
           </p>

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { Globe, Percent, Wifi, WifiOff } from "lucide-react"
 
 export function AdminSettings() {
-  const [siteName, setSiteName] = useState("P1G Kataale")
+  const [siteName, setSiteName] = useState("P1G katale")
   const [contactEmail, setContactEmail] = useState("admin@p1gmarket.ug")
   const [commission, setCommission] = useState(5)
   const [maintenance, setMaintenance] = useState(false)

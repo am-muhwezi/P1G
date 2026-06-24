@@ -92,7 +92,7 @@ export function BuyerHome() {
             Trade with Confidence
           </h2>
           <p className="text-body-md font-body-md text-on-surface-variant dark:text-outline-variant">
-            Every transaction on P1G Kataale is backed by verified sellers and secure payment processing. Quality guaranteed.
+            Every transaction on P1G katale is backed by verified sellers and secure payment processing. Quality guaranteed.
           </p>
         </div>
         <button className="px-8 py-4 bg-white border border-primary text-primary font-label-lg text-label-lg rounded-xl hover:bg-primary hover:text-white transition-all shadow-sm dark:bg-surface-dim dark:border-primary-fixed dark:text-primary-fixed dark:hover:bg-primary-fixed dark:hover:text-on-primary-fixed">

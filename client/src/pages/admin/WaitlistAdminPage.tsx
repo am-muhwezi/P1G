@@ -41,7 +41,7 @@ export default function WaitlistAdminPage() {
       <aside className="fixed top-0 left-0 z-40 h-full w-60 bg-[#002114] flex-col hidden lg:flex">
         <div className="flex items-center gap-3 px-6 h-16 border-b border-white/10">
           <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0">
-            <img src="/logo.png" alt="P1G Kataale" className="h-7 w-7 object-contain" />
+            <img src="/logo.png" alt="P1G katale" className="h-7 w-7 object-contain" />
           </div>
           <span className="font-['Plus_Jakarta_Sans'] text-[24px] font-bold text-white">P1G Admin</span>
         </div>

@@ -31,10 +31,10 @@ export function AppShell() {
       <aside className="fixed top-0 left-0 z-40 h-full w-60 bg-[#002114] flex-col hidden lg:flex">
         <div className="flex items-center gap-3 px-6 h-16 border-b border-white/10">
           <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center overflow-hidden shrink-0">
-            <img src="/logo.png" alt="P1G Kataale" className="h-7 w-7 object-contain" />
+            <img src="/logo.png" alt="P1G katale" className="h-7 w-7 object-contain" />
           </div>
           <span className="font-headline-md text-headline-md font-bold text-white">
-            P1G Kataale
+            P1G katale
           </span>
         </div>
         <nav className="flex-1 px-3 py-6 space-y-1">
@@ -87,7 +87,7 @@ export function AppShell() {
         <button onClick={() => setMobileMenuOpen(true)} className="text-on-surface dark:text-primary-fixed">
           <Menu size={24} />
         </button>
-        <span className="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">P1G Kataale</span>
+        <span className="font-headline-md text-headline-md font-bold text-primary dark:text-primary-fixed">P1G katale</span>
         <div className="flex gap-2">
           <button onClick={toggleTheme} className="text-on-surface dark:text-primary-fixed">
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}

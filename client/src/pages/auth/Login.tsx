@@ -38,8 +38,8 @@ export function Login() {
     <div className="min-h-screen bg-surface dark:bg-background flex items-center justify-center px-margin-mobile">
       <div className="w-full max-w-md">
         <div className="text-center mb-10">
-          <img src="/logo.png" alt="P1G Kataale" className="h-16 w-16 mx-auto rounded-full" />
-          <h1 className="font-headline-lg text-headline-lg text-primary mt-2 dark:text-primary-fixed">P1G Kataale</h1>
+          <img src="/logo.png" alt="P1G katale" className="h-16 w-16 mx-auto rounded-full" />
+          <h1 className="font-headline-lg text-headline-lg text-primary mt-2 dark:text-primary-fixed">P1G katale</h1>
           <p className="text-on-surface-variant font-body-md text-body-md dark:text-outline-variant">
             Sign in to your account
           </p>

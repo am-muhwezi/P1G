@@ -16,9 +16,7 @@ function useCountdown(target: Date) {
 
 export default function ComingSoon() {
   const [launchDate] = useState(() => {
-    const d = new Date()
-    d.setDate(d.getDate() + 45)
-    return d
+    return new Date(Date.now() + 72 * 60 * 60 * 1000)
   })
   const countdown = useCountdown(launchDate)
 
@@ -67,11 +65,11 @@ export default function ComingSoon() {
               className="h-10 w-10 object-contain"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhhMd-K2Mc4vUo_A-O7TSGkPf8vvNFSrcl_5gZO4LXfmMrdXGwPqPZR-akDfVD6fkZkXALRW2o_nWhlSf0TOvA9rTWRGOijDRotOC-FGZ3EbmZYxEtdu59MvUWeD8UjkOCTdoTRrM919hZWKCtRxuTJvN0mf7hghwKs9wwEccm01g7L-1FOjPXHJimBJM7ptV19Mmua7mP0P-Fsczv--3F7OGpV7tsWSGJi2sT_n8WcXEcb0vGdu3LVIq8elJ-42ANplhg1kTsUjk"
             />
-            <span className="font-['Plus_Jakarta_Sans'] text-[24px] font-bold text-[#0d631b]">P1G Kataale</span>
+            <span className="font-['Plus_Jakarta_Sans'] text-[24px] font-bold text-[#0d631b]">P1G katale</span>
           </div>
           <div className="hidden md:flex items-center gap-6">
             <a href="#features" className="font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] text-[#40493d] hover:text-[#0d631b] transition-colors">
-              Why P1G Kataale?
+              Why P1G katale?
             </a>
             <a href="#share" className="font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] text-[#40493d] hover:text-[#0d631b] transition-colors">
               Spread the Word
@@ -294,7 +292,7 @@ export default function ComingSoon() {
                   Verified Breeders
                 </h3>
                 <p className="font-['Plus_Jakarta_Sans'] text-[16px] leading-[24px] opacity-90">
-                  Every seller on P1G Kataale undergoes a rigorous vetting process. Buy healthy breeds from Uganda's most reputable swine farmers.
+                  Every seller on P1G katale undergoes a rigorous vetting process. Buy healthy breeds from Uganda's most reputable swine farmers.
                 </p>
               </div>
               <div className="mt-8 flex -space-x-4">
@@ -330,11 +328,11 @@ export default function ComingSoon() {
               Know someone in pig farming?
             </h2>
             <p className="font-['Plus_Jakarta_Sans'] text-[16px] leading-[24px] text-[#40493d] mb-6">
-              Help us build the community. Share P1G Kataale with your fellow farmers and wholesalers.
+              Help us build the community. Share P1G Katale with your fellow farmers and wholesalers.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <a
-                href="https://wa.me/?text=Check%20out%20P1G%20Kataale%20%E2%80%93%20Uganda%27s%20most%20trusted%20livestock%20marketplace%20and%20escrow%20platform.%20https%3A%2F%2Fp1gkataale.com"
+                href="https://wa.me/?text=Check%20out%20P1G%20Katale%20%E2%80%93%20Uganda%27s%20most%20trusted%20livestock%20marketplace%20and%20escrow%20platform.%20https%3A%2F%2Fp1gz.com"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 bg-[#25D366] text-white px-6 py-3 rounded-full font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] hover:brightness-95 transition-all shadow-md"
@@ -345,7 +343,7 @@ export default function ComingSoon() {
                 <span>WhatsApp</span>
               </a>
               <button
-                onClick={() => navigator.clipboard.writeText("https://p1gkataale.com")}
+                onClick={() => navigator.clipboard.writeText("https://p1gz.com")}
                 className="flex items-center gap-3 bg-[#46291e] text-[#ffede7] px-6 py-3 rounded-full font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] hover:opacity-90 transition-all shadow-md"
               >
                 <span className="material-symbols-outlined text-[20px]">link</span>
@@ -364,10 +362,10 @@ export default function ComingSoon() {
               className="h-8 w-8 grayscale"
               src="https://lh3.googleusercontent.com/aida-public/AB6AXuBhhMd-K2Mc4vUo_A-O7TSGkPf8vvNFSrcl_5gZO4LXfmMrdXGwPqPZR-akDfVD6fkZkXALRW2o_nWhlSf0TOvA9rTWRGOijDRotOC-FGZ3EbmZYxEtdu59MvUWeD8UjkOCTdoTRrM919hZWKCtRxuTJvN0mf7hghwKs9wwEccm01g7L-1FOjPXHJimBJM7ptV19Mmua7mP0P-Fsczv--3F7OGpV7tsWSGJi2sT_n8WcXEcb0vGdu3LVIq8elJ-42ANplhg1kTsUjk"
             />
-            <span className="font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] font-bold text-[#2e150b]">P1G Kataale</span>
+            <span className="font-['Plus_Jakarta_Sans'] text-[14px] font-semibold tracking-[0.05em] font-bold text-[#2e150b]">P1G katale</span>
           </div>
           <div className="text-[12px] text-[#40493d]">
-            &copy; 2024 P1G Kataale. All rights reserved. Registered under PorcineHub Uganda.
+            &copy; 2026 P1G katale. All rights reserved. Registered under Saverio Farms and Technologies.
           </div>
           <div className="flex gap-3">
             <a href="#" className="text-[#40493d] hover:text-[#0d631b] transition-colors text-[12px] font-bold">Privacy</a>

@@ -7,7 +7,7 @@ from app.routers.waitlist import router as waitlist_router
 
 load_dotenv()
 
-app = FastAPI(title="P1G Kataale — Waitlist API", version="0.1.0")
+app = FastAPI(title="P1G katale — Waitlist API", version="0.1.0")
 
 origins = os.getenv("ALLOWED_ORIGINS")
 if not origins:

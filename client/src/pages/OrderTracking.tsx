@@ -92,7 +92,7 @@ export function OrderTracking() {
           </div>
           <div className="mt-8 bg-on-primary-container/10 p-4 rounded-lg border border-on-primary-container/20 dark:bg-on-primary/10 dark:border-on-primary/20">
             <p className="text-label-sm italic opacity-80">
-              "Agriculture is our foundation. Trust is our bridge." — P1G Kataale
+              "Agriculture is our foundation. Trust is our bridge." — P1G katale
             </p>
           </div>
         </section>

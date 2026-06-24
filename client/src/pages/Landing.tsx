@@ -98,7 +98,7 @@ export function Landing() {
       <section id="about" className="max-w-container-max mx-auto my-24 px-margin-mobile md:px-margin-desktop scroll-mt-20">
         <div className="text-center mb-12">
           <span className="inline-block px-4 py-1 bg-amber-50 text-amber-700 rounded-full text-label-sm font-label-sm mb-4 dark:bg-amber-900/20 dark:text-amber-400">Trusted Platform</span>
-          <h2 className="font-headline-lg text-headline-lg text-on-surface dark:text-primary-fixed">About P1G Kataale</h2>
+          <h2 className="font-headline-lg text-headline-lg text-on-surface dark:text-primary-fixed">About P1G katale</h2>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           <div className="space-y-5">
