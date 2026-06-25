@@ -7,11 +7,9 @@ interface ProductCardProps {
   listing: Listing;
   onAddToCart?: (listing: Listing) => void;
   plusOverlay?: boolean;
-  onToggleWishlist?: (listing: Listing) => void;
-  isWishlisted?: boolean;
 }
 
-export function ProductCard({ listing, onAddToCart, plusOverlay, onToggleWishlist, isWishlisted }: ProductCardProps) {
+export function ProductCard({ listing, onAddToCart, plusOverlay }: ProductCardProps) {
   const navigate = useNavigate();
 
   return (
@@ -25,17 +23,7 @@ export function ProductCard({ listing, onAddToCart, plusOverlay, onToggleWishlis
           src={listing.image || 'https://placehold.co/600x400/e8fff0/0d631b?text=No+Image'}
           alt={listing.title}
         />
-        {onToggleWishlist && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onToggleWishlist(listing) }}
-            className="absolute top-2 left-2 h-8 w-8 rounded-full flex items-center justify-center shadow-lg hover:scale-110 active:scale-95 transition-all"
-            style={{ backgroundColor: isWishlisted ? "#ba1a1a" : "#ffffff" }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill={isWishlisted ? "#ffffff" : "none"} stroke={isWishlisted ? "#ffffff" : "#707a6c"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z" />
-            </svg>
-          </button>
-        )}
+
         {plusOverlay && onAddToCart && (
           <button
             onClick={(e) => { e.stopPropagation(); onAddToCart(listing) }}

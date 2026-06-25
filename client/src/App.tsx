@@ -21,7 +21,7 @@ import { BuyerHome } from './pages/buyer/BuyerHome';
 import { BuyerOrders } from './pages/buyer/BuyerOrders';
 import { BuyerProfile } from './pages/buyer/BuyerProfile';
 import { Cart } from './pages/buyer/Cart';
-import { Wishlist } from './pages/Wishlist';
+
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import WaitlistAdminPage from './pages/admin/WaitlistAdminPage';
 import { AdminUsers } from './pages/admin/AdminUsers';
@@ -41,7 +41,6 @@ export default function App() {
             <Route path="/product/:id" element={<ProductDetail />} />
             <Route path="/order/:orderId" element={<OrderTracking />} />
             <Route path="/cart" element={<Cart />} />
-            <Route path="/wishlist" element={<Wishlist />} />
           </Route>
           <Route path="/login" element={<Login />} />
           <Route element={<RequireAuth role="seller" />}>

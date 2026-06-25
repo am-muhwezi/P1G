@@ -5,8 +5,7 @@ import { ProductCard } from '../components/features/ProductCard';
 import { Input } from '../components/ui/Input';
 import { MOCK_LISTINGS, marketplaceFilters } from '../lib/data';
 import { useCart } from '../store/cart';
-import { useWishlist } from '../store/wishlist';
-import { ShoppingCart, Heart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 
 export function Marketplace() {
   const navigate = useNavigate();
@@ -14,7 +13,6 @@ export function Marketplace() {
   const [activeFilter, setActiveFilter] = useState(searchParams.get('category') || 'all');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
   const { addItem, items } = useCart();
-  const { addItem: addWishlist, removeItem: removeWishlist, isWishlisted } = useWishlist();
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
 
   const filtered = MOCK_LISTINGS.filter((l) => {
@@ -29,14 +27,6 @@ export function Marketplace() {
 
   const handleAddToCart = (listing: typeof MOCK_LISTINGS[0]) => {
     addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit });
-  };
-
-  const handleToggleWishlist = (listing: typeof MOCK_LISTINGS[0]) => {
-    if (isWishlisted(listing.id)) {
-      removeWishlist(listing.id);
-    } else {
-      addWishlist({ listingId: listing.id, title: listing.title, price: listing.price, sellerName: listing.sellerName, unit: listing.unit, district: listing.district, image: listing.image });
-    }
   };
 
   const handleFilterChange = (id: string) => {
@@ -90,8 +80,6 @@ export function Marketplace() {
               listing={listing}
               onAddToCart={handleAddToCart}
               plusOverlay
-              onToggleWishlist={handleToggleWishlist}
-              isWishlisted={isWishlisted(listing.id)}
             />
           ))}
         </section>
@@ -113,13 +101,6 @@ export function Marketplace() {
       </section>
 
       <div className="fixed bottom-24 right-6 md:bottom-12 md:right-12 flex flex-col gap-3 z-40">
-        <button
-          onClick={() => navigate('/wishlist')}
-          className="h-14 w-14 md:h-16 md:w-16 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all"
-          style={{ backgroundColor: "#fff8f6" }}
-        >
-          <Heart size={22} style={{ color: "#ba1a1a" }} fill="#ba1a1a" />
-        </button>
         <button
           onClick={() => navigate('/cart')}
           className="h-14 w-14 md:h-16 md:w-16 bg-primary text-on-primary rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all dark:bg-primary-fixed dark:text-on-primary-fixed"
