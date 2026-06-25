@@ -43,7 +43,7 @@ export default function ComingSoon() {
 
     // Also POST to backend if available
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE ?? "http://localhost:8000"}/api/waitlist`, {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/waitlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

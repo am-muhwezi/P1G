@@ -10,14 +10,14 @@ interface WaitlistEntry {
   createdAt: string
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000"
+const API_URL = import.meta.env.VITE_API_URL
 
 const STORAGE_KEY = "p1g-waitlist"
 
 async function fetchFromAPI(): Promise<WaitlistEntry[] | null> {
   try {
     const adminPassword = localStorage.getItem("p1g-waitlist-admin-pw") || ""
-    const res = await fetch(`${API_BASE}/api/waitlist`, {
+    const res = await fetch(`${API_URL}/api/waitlist`, {
       headers: { "x-admin-password": adminPassword },
     })
     if (!res.ok) return null

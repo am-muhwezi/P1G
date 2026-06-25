@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ShieldCheck, Lock, AlertCircle } from "lucide-react"
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000"
+const API_URL = import.meta.env.VITE_API_URL
 const AUTH_STORAGE_KEY = "p1g-waitlist-password"
 const PW_STORAGE_KEY = "p1g-waitlist-admin-pw"
 
@@ -23,7 +23,7 @@ export function WaitlistLogin({ onAuth }: Props) {
 
     setLoading(true)
     try {
-      const res = await fetch(`${API_BASE}/api/waitlist/auth`, {
+      const res = await fetch(`${API_URL}/api/waitlist/auth`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
