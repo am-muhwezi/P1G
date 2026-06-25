@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { ShieldCheck, Lock, AlertCircle } from "lucide-react"
 
-const API_BASE = "http://localhost:8000"
+const API_BASE = import.meta.env.VITE_API_BASE ?? "http://localhost:8000"
 const AUTH_STORAGE_KEY = "p1g-waitlist-password"
 const PW_STORAGE_KEY = "p1g-waitlist-admin-pw"
 
