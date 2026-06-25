@@ -42,6 +42,11 @@ export default function ComingSoon() {
 
     setFormState("done")
 
+    setTimeout(() => {
+      setFormState("idle")
+      setFormData({ name: "", email: "", phone: "+256", interest: "buyer" })
+    }, 3000)
+
     // Fire-and-forget POST to backend
     fetch(`${import.meta.env.VITE_API_URL}/api/waitlist`, {
       method: "POST",
