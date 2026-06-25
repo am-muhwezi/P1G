@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ShieldCheck, Lock, AlertCircle } from "lucide-react"
+import { ShieldCheck, Lock, AlertCircle, Eye, EyeOff } from "lucide-react"
 
 const API_URL = import.meta.env.VITE_API_URL
 const AUTH_STORAGE_KEY = "p1g-waitlist-password"
@@ -11,6 +11,7 @@ interface Props {
 
 export function WaitlistLogin({ onAuth }: Props) {
   const [password, setPassword] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [serverDown, setServerDown] = useState(false)
@@ -20,6 +21,7 @@ export function WaitlistLogin({ onAuth }: Props) {
     setError("")
     setServerDown(false)
     if (!password.trim()) { setError("Enter a password"); return }
+    if (!API_URL) { setError("VITE_API_URL is not set — configure it in Vercel env vars and redeploy"); setServerDown(true); return }
 
     setLoading(true)
     try {
@@ -60,13 +62,20 @@ export function WaitlistLogin({ onAuth }: Props) {
           <div className="relative">
             <Lock size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant" />
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Password"
-              className="w-full pl-10 pr-4 py-3 bg-warm-beige rounded-xl text-body-md text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary outline-none border-none dark:bg-surface-dim dark:text-primary-fixed"
+              className="w-full pl-10 pr-12 py-3 bg-warm-beige rounded-xl text-body-md text-on-surface placeholder:text-outline focus:ring-2 focus:ring-primary outline-none border-none dark:bg-surface-dim dark:text-primary-fixed"
               value={password}
               onChange={e => setPassword(e.target.value)}
               autoFocus
             />
+            <button
+              type="button"
+              onClick={() => setShowPassword(s => !s)}
+              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-on-surface-variant hover:text-on-surface transition-colors"
+            >
+              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
           </div>
           {error && (
             <div className={`flex items-center gap-2 text-sm text-left ${serverDown ? "text-amber-600" : "text-red-600 dark:text-red-400"}`}>
