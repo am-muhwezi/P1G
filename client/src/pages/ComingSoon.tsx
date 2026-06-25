@@ -26,7 +26,6 @@ export default function ComingSoon() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (formState === "done") return
-    setFormState("loading")
 
     // Save to localStorage for admin dashboard
     const entry = {
@@ -41,16 +40,14 @@ export default function ComingSoon() {
       localStorage.setItem("p1g-waitlist", JSON.stringify(existing))
     } catch { /* ignore */ }
 
-    // Also POST to backend if available
-    try {
-      await fetch(`${import.meta.env.VITE_API_URL}/api/waitlist`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      })
-    } catch { /* backend may not be running */ }
-
     setFormState("done")
+
+    // Fire-and-forget POST to backend
+    fetch(`${import.meta.env.VITE_API_URL}/api/waitlist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    }).catch(() => {})
   }
 
   const pad = (n: number) => String(n).padStart(2, "0")
