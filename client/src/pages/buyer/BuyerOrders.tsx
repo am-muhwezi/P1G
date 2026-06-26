@@ -1,10 +1,8 @@
-import { useState } from "react"
-import { useAuth } from "../../store/auth"
-import { MOCK_ORDERS, formatUGX, formatDate } from "../../lib/data"
-import { Package, ShoppingCart, Clock, CheckCircle, Calendar, MapPin } from "lucide-react"
+import { useState, useEffect } from "react"
+import { api } from "../../lib/api"
+import { formatUGX, formatDate, type Order } from "../../lib/data"
+import { Package, ShoppingCart, Clock, CheckCircle, Calendar, MapPin, AlertCircle } from "lucide-react"
 import { Link } from "react-router-dom"
-
-const DEFAULT_BUYER_NAME = "John Buyer"
 
 const STEPS = ["pending", "confirmed", "in_transit", "delivered"]
 
@@ -49,16 +47,21 @@ function TrackingTimeline({ status }: { status: string }) {
 }
 
 export function BuyerOrders() {
-  const auth = useAuth()
-  const buyerName = auth.name || DEFAULT_BUYER_NAME
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [filter, setFilter] = useState<string>("all")
 
-  const rawOrders = MOCK_ORDERS.filter((o) => o.buyerName === buyerName)
-  const allOrders = rawOrders.length > 0 ? rawOrders : MOCK_ORDERS.filter((o) => o.buyerName === DEFAULT_BUYER_NAME)
-  const filteredOrders = filter === "all" ? allOrders : allOrders.filter((o) => o.status === filter)
-  const totalSpent = allOrders.reduce((s, o) => s + o.total, 0)
-  const pendingCount = allOrders.filter((o) => o.status === "pending" || o.status === "confirmed").length
-  const deliveredCount = allOrders.filter((o) => o.status === "delivered").length
+  useEffect(() => {
+    setLoading(true)
+    setError("")
+    api.get("/api/orders").then(setOrders).catch(() => setError("Failed to load orders.")).finally(() => setLoading(false))
+  }, [])
+
+  const filteredOrders = filter === "all" ? orders : orders.filter((o) => o.status === filter)
+  const totalSpent = orders.reduce((s, o) => s + o.total, 0)
+  const pendingCount = orders.filter((o) => o.status === "pending" || o.status === "confirmed").length
+  const deliveredCount = orders.filter((o) => o.status === "delivered").length
 
   const tabs = ["all", "pending", "confirmed", "in_transit", "delivered"]
 
@@ -76,7 +79,7 @@ export function BuyerOrders() {
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 dark:bg-emerald-900/20 dark:text-emerald-400">
             <ShoppingCart size={18} />
           </div>
-          <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{allOrders.length}</p>
+          <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{orders.length}</p>
           <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">Total Orders</p>
         </div>
         <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container">
@@ -118,7 +121,14 @@ export function BuyerOrders() {
         ))}
       </div>
 
-      {filteredOrders.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12 text-on-surface-variant font-body-md dark:text-outline-variant">Loading orders...</div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <AlertCircle size={48} className="text-error mb-4" />
+          <p className="text-on-surface-variant font-body-lg text-body-lg dark:text-outline-variant">{error}</p>
+        </div>
+      ) : filteredOrders.length === 0 ? (
         <div className="bg-surface-container-lowest rounded-xl p-12 shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container flex flex-col items-center justify-center text-center">
           <div className="w-16 h-16 rounded-full bg-primary-container/30 flex items-center justify-center text-primary mb-4 dark:bg-primary-fixed/20 dark:text-primary-fixed">
             <Package size={32} />
@@ -152,7 +162,7 @@ export function BuyerOrders() {
               </div>
 
               <div className="space-y-1.5 mb-3">
-                {order.items.map((item, i) => (
+                {(order.items || []).map((item, i) => (
                   <div key={i} className="flex items-center justify-between text-body-md font-body-md">
                     <span className="text-on-surface dark:text-outline-variant">{item.title} <span className="text-on-surface-variant dark:text-outline">×{item.quantity}</span></span>
                     <span className="font-label-md text-label-md text-on-surface dark:text-primary-fixed">{formatUGX(item.price * item.quantity)}</span>

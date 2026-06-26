@@ -1,41 +1,47 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { FilterBar } from '../components/features/FilterBar';
 import { ProductCard } from '../components/features/ProductCard';
 import { Input } from '../components/ui/Input';
-import { MOCK_LISTINGS, marketplaceFilters } from '../lib/data';
+import { api } from '../lib/api';
+import { marketplaceFilters, type Listing } from '../lib/data';
 import { useCart } from '../store/cart';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, AlertCircle } from 'lucide-react';
 
 export function Marketplace() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [activeFilter, setActiveFilter] = useState(searchParams.get('category') || 'all');
   const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [listings, setListings] = useState<Listing[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
   const { addItem, items } = useCart();
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
 
-  const filtered = MOCK_LISTINGS.filter((l) => {
-    if (activeFilter !== 'all') {
-      if (activeFilter === 'verified') return l.sellerVerified;
-      if (activeFilter === 'price') return true;
-      if (activeFilter === 'location') return l.district.toLowerCase().includes(searchQuery.toLowerCase());
-    }
-    if (searchQuery) return l.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return true;
-  });
+  useEffect(() => {
+    setLoading(true)
+    setError("")
+    const params: Record<string, string> = {}
+    const cat = searchParams.get('category')
+    const q = searchParams.get('q')
+    const loc = searchParams.get('location')
+    if (cat && cat !== 'all' && cat !== 'verified' && cat !== 'price' && cat !== 'location' && cat !== 'breed') params.category = cat
+    if (q) params.search = q
+    if (loc) params.district = loc
+    api.get(`/api/listings?${new URLSearchParams(params)}`).then(setListings).catch(() => setError("Failed to load listings. Please try again.")).finally(() => setLoading(false))
+  }, [searchParams])
 
-  const handleAddToCart = (listing: typeof MOCK_LISTINGS[0]) => {
+  const handleAddToCart = (listing: Listing) => {
     addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit });
   };
 
   const handleFilterChange = (id: string) => {
     setActiveFilter(id);
-    if (id === 'all') {
-      setSearchParams({});
-    } else {
-      setSearchParams({ category: id });
-    }
+    const next: Record<string, string> = {}
+    if (id !== 'all') next.category = id
+    if (searchQuery) next.q = searchQuery
+    setSearchParams(next);
   };
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -43,6 +49,8 @@ export function Marketplace() {
       setSearchParams({ q: searchQuery });
     }
   };
+
+  const filtered = activeFilter === 'verified' ? listings.filter((l) => l.sellerVerified) : activeFilter === 'location' && searchQuery ? listings.filter((l) => l.district.toLowerCase().includes(searchQuery.toLowerCase())) : listings
 
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-stack-lg pb-24">
@@ -67,7 +75,14 @@ export function Marketplace() {
         />
       </section>
 
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-20 text-on-surface-variant font-body-md dark:text-outline-variant">Loading listings...</div>
+      ) : error ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <AlertCircle size={48} className="text-error mb-4" />
+          <p className="text-on-surface-variant font-body-lg text-body-lg dark:text-outline-variant">{error}</p>
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <span className="material-symbols-outlined text-6xl text-outline-variant dark:text-outline">search_off</span>
           <p className="text-on-surface-variant font-body-lg text-body-lg mt-4 dark:text-outline-variant">No listings match your criteria.</p>
@@ -79,7 +94,6 @@ export function Marketplace() {
               key={listing.id}
               listing={listing}
               onAddToCart={handleAddToCart}
-              plusOverlay
             />
           ))}
         </section>

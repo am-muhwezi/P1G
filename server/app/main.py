@@ -2,8 +2,13 @@ import os
 from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.database import init_db
+from app.database import init_db, SessionLocal
+from app.seed import seed_all
 from app.routers.waitlist import router as waitlist_router
+from app.routers.auth import router as auth_router
+from app.routers.seller import router as seller_router
+from app.routers.buyer import router as buyer_router
+from app.routers.admin import router as admin_router
 
 load_dotenv()
 
@@ -22,17 +27,20 @@ app.add_middleware(
 )
 
 app.include_router(waitlist_router)
+app.include_router(auth_router)
+app.include_router(seller_router)
+app.include_router(buyer_router)
+app.include_router(admin_router)
 
 
 @app.on_event("startup")
 def on_startup():
-    pw = os.getenv("P1G_WAITLIST_ADMIN_PASSWORD")
-    if not pw:
-        raise RuntimeError(
-            "P1G_WAITLIST_ADMIN_PASSWORD env var is required. "
-            "Create a .env file or set it in the environment."
-        )
     init_db()
+    db = SessionLocal()
+    try:
+        seed_all(db)
+    finally:
+        db.close()
 
 
 @app.get("/health")

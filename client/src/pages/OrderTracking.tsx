@@ -1,22 +1,71 @@
-import { OrderTimeline } from '../components/features/OrderTimeline';
-import { TransactionLog } from '../components/features/TransactionLog';
-import { sampleOrder } from '../data/mock';
+import { useState, useEffect } from "react"
+import { useParams } from "react-router-dom"
+import { api } from "../lib/api"
+import { formatDate, formatUGX, type Order } from "../lib/data"
+import { OrderTimeline } from "../components/features/OrderTimeline"
+import { TransactionLog } from "../components/features/TransactionLog"
 
-const activityLog = [
-  { label: 'Payment confirmed', timestamp: 'Oct 25, 2023 • 14:32 PM' },
-  { label: 'Buyer initiated payment via Mobile Money', timestamp: 'Oct 24, 2023 • 09:15 AM' },
-  { label: 'Order created by Buyer', timestamp: 'Oct 24, 2023 • 08:45 AM', isCompleted: false },
-];
+function statusToProgress(status: string): number {
+  switch (status) {
+    case "pending": return 25
+    case "confirmed": return 50
+    case "in_transit": return 75
+    case "delivered": return 100
+    default: return 0
+  }
+}
+
+const stepOrder: Record<string, string> = {
+  pending: "placed",
+  confirmed: "confirmed",
+  in_transit: "in_transit",
+  delivered: "delivered",
+}
 
 export function OrderTracking() {
-  const order = sampleOrder;
+  const { orderId } = useParams()
+  const [order, setOrder] = useState<Order | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!orderId) return
+    setLoading(true)
+    api.get(`/api/orders/${orderId}`).then(setOrder).catch(() => setOrder(null)).finally(() => setLoading(false))
+  }, [orderId])
+
+  if (loading) {
+    return (
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-32">
+        <p className="text-on-surface-variant font-body-lg text-center py-20 dark:text-outline-variant">Loading...</p>
+      </div>
+    )
+  }
+
+  if (!order) {
+    return (
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-32">
+        <p className="text-on-surface-variant font-body-lg text-center py-20 dark:text-outline-variant">Order not found.</p>
+      </div>
+    )
+  }
+
+  const items = order.items || []
+  const firstItem = items[0]
+  const progress = statusToProgress(order.status)
+
+  const activityLog = [
+    { label: "Order placed", timestamp: formatDate(order.createdAt), isCompleted: true },
+    ...(order.status !== "pending" ? [{ label: "Payment confirmed", timestamp: formatDate(order.updatedAt), isCompleted: true }] : []),
+    ...(order.status === "in_transit" ? [{ label: "In transit", timestamp: formatDate(order.updatedAt), isCompleted: true }] : []),
+    ...(order.status === "delivered" ? [{ label: "Delivered", timestamp: formatDate(order.updatedAt), isCompleted: true }] : []),
+  ]
 
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-32">
       <section className="grid grid-cols-1 md:grid-cols-3 gap-gutter mb-stack-lg">
         <div className="md:col-span-2 bg-surface-container-lowest rounded-xl p-stack-md shadow-sm border border-surface-container-high flex flex-col md:flex-row gap-6 items-center dark:bg-surface-dim dark:border-surface-container">
-          <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden shrink-0">
-            <img className="w-full h-full object-cover" src={order.product.images[0]} alt={order.product.title} />
+          <div className="w-full md:w-48 h-48 rounded-lg overflow-hidden shrink-0 bg-surface-container flex items-center justify-center text-outline-variant">
+            <span className="material-symbols-outlined text-6xl">inventory_2</span>
           </div>
           <div className="flex-grow">
             <div className="flex items-center gap-2 mb-2">
@@ -25,16 +74,16 @@ export function OrderTracking() {
                 Payment secured
               </span>
             </div>
-            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1 dark:text-primary-fixed">Order #{order.orderId}</h2>
-            <p className="font-body-lg text-body-lg text-on-surface-variant mb-4 dark:text-outline-variant">{order.product.title}</p>
+            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1 dark:text-primary-fixed">Order #{order.id}</h2>
+            <p className="font-body-lg text-body-lg text-on-surface-variant mb-4 dark:text-outline-variant">{firstItem?.title}</p>
             <div className="flex flex-wrap gap-4 text-label-lg font-label-lg">
               <div className="flex items-center gap-1 text-on-surface dark:text-primary-fixed">
                 <span className="material-symbols-outlined text-primary dark:text-primary-fixed">pin_drop</span>
-                {order.deliveryLocation}
+                {order.address}, {order.district}
               </div>
               <div className="flex items-center gap-1 text-on-surface dark:text-primary-fixed">
                 <span className="material-symbols-outlined text-primary dark:text-primary-fixed">calendar_today</span>
-                Ordered {order.orderedAt}
+                Ordered {formatDate(order.createdAt)}
               </div>
             </div>
           </div>
@@ -44,8 +93,22 @@ export function OrderTracking() {
           <div>
             <h3 className="font-label-lg text-label-lg text-outline uppercase tracking-wider mb-4 dark:text-outline-variant">Transaction ID</h3>
             <div className="bg-surface-container p-3 rounded-lg flex items-center justify-between mb-6 dark:bg-surface-container">
-              <code className="text-primary font-bold dark:text-primary-fixed">{order.secureTxId}</code>
-              <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors dark:text-outline-variant dark:hover:text-primary-fixed">content_copy</span>
+              <code className="text-primary font-bold dark:text-primary-fixed text-sm break-all">{order.id}</code>
+              <span className="material-symbols-outlined text-outline cursor-pointer hover:text-primary transition-colors dark:text-outline-variant dark:hover:text-primary-fixed shrink-0 ml-2">content_copy</span>
+            </div>
+            <div className="space-y-2 mb-4">
+              <div className="flex justify-between text-label-sm">
+                <span className="text-on-surface-variant dark:text-outline-variant">Items</span>
+                <span className="text-on-surface dark:text-primary-fixed">{items.length}</span>
+              </div>
+              <div className="flex justify-between text-label-sm">
+                <span className="text-on-surface-variant dark:text-outline-variant">Delivery</span>
+                <span className="text-on-surface dark:text-primary-fixed">{formatUGX(order.deliveryFee)}</span>
+              </div>
+              <div className="flex justify-between text-label-lg font-bold border-t border-outline-variant/20 pt-2">
+                <span className="text-on-surface dark:text-primary-fixed">Total</span>
+                <span className="text-primary dark:text-primary-fixed">{formatUGX(order.total)}</span>
+              </div>
             </div>
           </div>
           <div className="space-y-3">
@@ -53,15 +116,11 @@ export function OrderTracking() {
               <span className="material-symbols-outlined">support_agent</span>
               Contact Support
             </button>
-            <button className="w-full border-2 border-primary text-primary py-3 rounded-xl font-label-lg flex items-center justify-center gap-2 hover:bg-surface-container transition-all dark:border-primary-fixed dark:text-primary-fixed dark:hover:bg-surface-container">
-              <span className="material-symbols-outlined">description</span>
-              View Details
-            </button>
           </div>
         </div>
       </section>
 
-      <OrderTimeline status={order.status} progressPercent={order.progressPercent} />
+      <OrderTimeline status={stepOrder[order.status] || "placed"} progressPercent={progress} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-gutter">
         <TransactionLog entries={activityLog} />
@@ -98,5 +157,5 @@ export function OrderTracking() {
         </section>
       </div>
     </div>
-  );
+  )
 }

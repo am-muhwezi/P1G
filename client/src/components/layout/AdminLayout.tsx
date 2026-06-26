@@ -2,12 +2,14 @@ import { useState } from "react"
 import { NavLink, useNavigate, Outlet } from "react-router-dom"
 import { useAuth } from "../../store/auth"
 import { useTheme } from "../../context/ThemeContext"
-import { LayoutDashboard, Users, Package, Settings, LogOut, Sun, Moon, Menu } from "lucide-react"
+import { LayoutDashboard, Users, Package, Settings, ClipboardList, BarChart3, LogOut, Sun, Moon, Menu } from "lucide-react"
 
 const ADMIN_NAV = [
   { to: "/admin", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
+  { to: "/admin/analytics", label: "Analytics", icon: <BarChart3 size={20} /> },
   { to: "/admin/users", label: "Users", icon: <Users size={20} /> },
   { to: "/admin/listings", label: "Listings", icon: <Package size={20} /> },
+  { to: "/admin/waitlist", label: "Waitlist", icon: <ClipboardList size={20} /> },
   { to: "/admin/settings", label: "Settings", icon: <Settings size={20} /> },
 ]
 

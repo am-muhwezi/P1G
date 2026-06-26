@@ -1,0 +1,145 @@
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import desc
+
+from app.database import get_db
+from app.models.user import User
+from app.models.listing import Listing
+from app.models.order import Order, OrderItem
+from app.routers.auth import get_current_user
+from app.schemas.seller import ListingResponse, OrderResponse
+from app.schemas.buyer import OrderCreate
+
+router = APIRouter(prefix="/api", tags=["buyer"])
+
+
+@router.get("/listings", response_model=list[ListingResponse])
+def list_listings(
+    category: str = "",
+    district: str = "",
+    search: str = "",
+    sort: str = "-created_at",
+    db: Session = Depends(get_db),
+):
+    q = db.query(Listing).filter(Listing.status == "active")
+    if category:
+        q = q.filter(Listing.category == category)
+    if district:
+        q = q.filter(Listing.district == district)
+    if search:
+        q = q.filter(Listing.title.ilike(f"%{search}%"))
+    if sort == "price":
+        q = q.order_by(Listing.price.asc())
+    elif sort == "-price":
+        q = q.order_by(Listing.price.desc())
+    elif sort == "created_at":
+        q = q.order_by(Listing.created_at.asc())
+    else:
+        q = q.order_by(Listing.created_at.desc())
+    return q.all()
+
+
+@router.get("/listings/{listing_id}", response_model=ListingResponse)
+def get_listing(listing_id: str, db: Session = Depends(get_db)):
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    listing.views += 1
+    db.commit()
+    db.refresh(listing)
+    return listing
+
+
+@router.post("/orders", response_model=OrderResponse, status_code=201)
+def create_order(
+    data: OrderCreate,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    if not data.items:
+        raise HTTPException(status_code=422, detail="Order must have at least one item")
+
+    order_items: list[OrderItem] = []
+    total = 0
+    for item_data in data.items:
+        listing = db.query(Listing).filter(Listing.id == item_data.listing_id).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail=f"Listing {item_data.listing_id} not found")
+        if listing.status != "active":
+            raise HTTPException(status_code=400, detail=f"Listing '{listing.title}' is not available")
+        if listing.stock < item_data.quantity:
+            raise HTTPException(status_code=400, detail=f"Not enough stock for '{listing.title}'")
+
+        listing.stock -= item_data.quantity
+        subtotal = listing.price * item_data.quantity
+        total += subtotal
+
+        order_items.append(
+            OrderItem(
+                listing_id=listing.id,
+                seller_id=listing.seller_id,
+                seller_name=listing.seller_name,
+                title=listing.title,
+                price=listing.price,
+                quantity=item_data.quantity,
+                unit=listing.unit,
+            )
+        )
+
+    order = Order(
+        buyer_id=user.id,
+        buyer_name=user.name,
+        items=order_items,
+        total=total,
+        delivery_fee=data.delivery_fee,
+        payment_method=data.payment_method,
+        address=data.address,
+        district=data.district,
+        notes=data.notes or "",
+    )
+    db.add(order)
+    db.commit()
+    db.refresh(order)
+    return order
+
+
+@router.get("/orders", response_model=list[OrderResponse])
+def list_orders(
+    status: str = "",
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+):
+    q = db.query(Order).filter(Order.buyer_id == user.id)
+    if status:
+        q = q.filter(Order.status == status)
+    q = q.order_by(Order.created_at.desc())
+    return q.all()
+
+
+@router.get("/orders/{order_id}", response_model=OrderResponse)
+def get_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.buyer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your order")
+    return order
+
+
+@router.put("/orders/{order_id}/cancel", response_model=OrderResponse)
+def cancel_order(order_id: str, db: Session = Depends(get_db), user: User = Depends(get_current_user)):
+    order = db.query(Order).filter(Order.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if order.buyer_id != user.id:
+        raise HTTPException(status_code=403, detail="Not your order")
+    if order.status not in ("pending",):
+        raise HTTPException(status_code=400, detail="Only pending orders can be cancelled")
+    order.status = "cancelled"
+    for item in order.items:
+        listing = db.query(Listing).filter(Listing.id == item.listing_id).first()
+        if listing:
+            listing.stock += item.quantity
+    db.commit()
+    db.refresh(order)
+    return order

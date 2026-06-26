@@ -29,7 +29,8 @@ export function categoryCount(): Record<Category, number> {
   return counts as Record<Category, number>
 }
 
-export function formatUGX(amount: number): string {
+export function formatUGX(amount: number | undefined | null): string {
+  if (amount == null) return "UGX 0"
   return `UGX ${amount.toLocaleString("en-UG")}`
 }
 
@@ -187,7 +188,10 @@ export function listingFromId(id: string): Listing | undefined {
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-UG", { year: "numeric", month: "short", day: "numeric" })
+  if (!iso) return "--"
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return "--"
+  return d.toLocaleDateString("en-UG", { year: "numeric", month: "short", day: "numeric" })
 }
 
 export function getCategoryDisplays(): CategoryDisplay[] {
@@ -199,6 +203,29 @@ export function getCategoryDisplays(): CategoryDisplay[] {
     count: counts[id],
   }))
 }
+
+export const UGANDAN_DISTRICTS = [
+  "Kampala",
+  "Masaka",
+  "Mukono",
+  "Mbarara",
+  "Luweero",
+  "Mpigi",
+  "Wakiso",
+  "Jinja",
+  "Mbale",
+  "Gulu",
+  "Lira",
+  "Fort Portal",
+  "Kabale",
+  "Busia",
+  "Tororo",
+  "Arua",
+  "Soroti",
+  "Mityana",
+  "Kayunga",
+  "Rakai",
+] as const
 
 export const marketplaceFilters = [
   { id: "all", label: "All Categories" },

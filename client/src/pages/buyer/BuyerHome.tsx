@@ -1,40 +1,47 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useSearchParams } from "react-router-dom"
 import { FilterBar } from "../../components/features/FilterBar"
 import { ProductCard } from "../../components/features/ProductCard"
 import { Input } from "../../components/ui/Input"
-import { MOCK_LISTINGS, marketplaceFilters } from "../../lib/data"
+import { api } from "../../lib/api"
+import { marketplaceFilters, type Listing } from "../../lib/data"
 import { useCart } from "../../store/cart"
 import { useAuth } from "../../store/auth"
+import { AlertCircle } from "lucide-react"
 
 export function BuyerHome() {
   const [searchParams, setSearchParams] = useSearchParams()
   const [activeFilter, setActiveFilter] = useState(searchParams.get("category") || "all")
   const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "")
+  const [listings, setListings] = useState<Listing[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const addItem = useCart((s) => s.addItem)
   const auth = useAuth()
 
-  const filtered = MOCK_LISTINGS.filter((l) => {
-    if (activeFilter !== "all") {
-      if (activeFilter === "verified") return l.sellerVerified
-      if (activeFilter === "price") return true
-      if (activeFilter === "location") return l.district.toLowerCase().includes(searchQuery.toLowerCase())
-    }
-    if (searchQuery) return l.title.toLowerCase().includes(searchQuery.toLowerCase())
-    return true
-  })
+  useEffect(() => {
+    setLoading(true)
+    setError("")
+    const params: Record<string, string> = {}
+    const cat = searchParams.get("category")
+    const q = searchParams.get("q")
+    const loc = searchParams.get("location")
+    if (cat && cat !== "all" && cat !== "verified" && cat !== "price" && cat !== "location" && cat !== "breed") params.category = cat
+    if (q) params.search = q
+    if (loc) params.district = loc
+    api.get(`/api/listings?${new URLSearchParams(params)}`).then(setListings).catch(() => setError("Failed to load listings.")).finally(() => setLoading(false))
+  }, [searchParams])
 
-  const handleAddToCart = (listing: typeof MOCK_LISTINGS[0]) => {
+  const handleAddToCart = (listing: Listing) => {
     addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit })
   }
 
   const handleFilterChange = (id: string) => {
     setActiveFilter(id)
-    if (id === "all") {
-      setSearchParams({})
-    } else {
-      setSearchParams({ category: id })
-    }
+    const next: Record<string, string> = {}
+    if (id !== "all") next.category = id
+    if (searchQuery) next.q = searchQuery
+    setSearchParams(next)
   }
 
   const handleSearch = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -42,6 +49,8 @@ export function BuyerHome() {
       setSearchParams({ q: searchQuery })
     }
   }
+
+  const filtered = activeFilter === "verified" ? listings.filter((l) => l.sellerVerified) : activeFilter === "location" && searchQuery ? listings.filter((l) => l.district.toLowerCase().includes(searchQuery.toLowerCase())) : listings
 
   const firstName = auth.name?.split(" ")[0] || "Buyer"
 
@@ -72,7 +81,16 @@ export function BuyerHome() {
         />
       </section>
 
-      {filtered.length === 0 ? (
+      {error && (
+        <div className="flex items-center gap-3 p-4 mb-6 rounded-xl bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30">
+          <AlertCircle size={20} />
+          <span className="font-label-sm text-label-sm">{error}</span>
+        </div>
+      )}
+
+      {!error && loading ? (
+        <div className="text-center py-20 text-on-surface-variant font-body-md dark:text-outline-variant">Loading listings...</div>
+      ) : !error && filtered.length === 0 ? (
         <div className="text-center py-20">
           <span className="material-symbols-outlined text-6xl text-outline-variant dark:text-outline">search_off</span>
           <p className="text-on-surface-variant font-body-lg text-body-lg mt-4 dark:text-outline-variant">No listings match your criteria.</p>

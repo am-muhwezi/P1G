@@ -7,7 +7,10 @@ interface AuthState {
   role: Role | null
   userId: string | null
   name: string | null
-  login: (role: Role, userId: string, name: string) => void
+  email: string | null
+  token: string | null
+  status: string | null
+  login: (role: Role, userId: string, name: string, token: string, email: string, status?: string) => void
   logout: () => void
 }
 
@@ -18,8 +21,21 @@ export const useAuth = create<AuthState>()(
       role: null,
       userId: null,
       name: null,
-      login: (role, userId, name) => set({ isAuthenticated: true, role, userId, name }),
-      logout: () => set({ isAuthenticated: false, role: null, userId: null, name: null }),
+      email: null,
+      token: null,
+      status: null,
+      login: (role, userId, name, token, email, status = "active") =>
+        set({ isAuthenticated: true, role, userId, name, token, email, status }),
+      logout: () =>
+        set({
+          isAuthenticated: false,
+          role: null,
+          userId: null,
+          name: null,
+          email: null,
+          token: null,
+          status: null,
+        }),
     }),
     { name: "p1g-auth" },
   ),

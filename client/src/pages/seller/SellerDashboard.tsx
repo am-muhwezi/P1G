@@ -1,9 +1,7 @@
-import { useAuth } from "../../store/auth"
-import { MOCK_ORDERS, MOCK_LISTINGS, formatUGX, formatDate } from "../../lib/data"
-import { Package, ShoppingCart, Eye, TrendingUp, ArrowUp } from "lucide-react"
-
-const DEFAULT_SELLER_ID = "seller-1"
-const DEFAULT_SELLER_NAME = "Mukasa Farms"
+import { useEffect, useState } from "react"
+import { api } from "../../lib/api"
+import { formatUGX, formatDate, type Listing, type Order } from "../../lib/data"
+import { Package, ShoppingCart, Eye, TrendingUp, ArrowUp, AlertCircle } from "lucide-react"
 
 const statusColor: Record<string, string> = {
   active: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
@@ -22,47 +20,75 @@ function StatusPill({ status }: { status: string }) {
   )
 }
 
-const weeklyData = [
-  { label: "Mon", orders: 2, revenue: 600000 },
-  { label: "Tue", orders: 1, revenue: 1200000 },
-  { label: "Wed", orders: 0, revenue: 0 },
-  { label: "Thu", orders: 3, revenue: 2450000 },
-  { label: "Fri", orders: 1, revenue: 350000 },
-  { label: "Sat", orders: 0, revenue: 0 },
-  { label: "Sun", orders: 0, revenue: 0 },
-]
-const maxRevenue = Math.max(...weeklyData.map((d) => d.revenue), 1)
-const maxOrders = Math.max(...weeklyData.map((d) => d.orders), 1)
+interface DashboardData {
+  totalListings: number
+  activeListings: number
+  totalViews: number
+  revenue: number
+  ordersCount: number
+  pendingOrders: number
+  topListing: Listing | null
+  avgRating: number
+  reviewedListings: number
+  recentListings: Listing[]
+  recentOrders: Order[]
+  weeklyData: { label: string; orders: number; revenue: number }[]
+}
+
+const DEFAULT_DATA: DashboardData = {
+  totalListings: 0,
+  activeListings: 0,
+  totalViews: 0,
+  revenue: 0,
+  ordersCount: 0,
+  pendingOrders: 0,
+  topListing: null,
+  avgRating: 0,
+  reviewedListings: 0,
+  recentListings: [],
+  recentOrders: [],
+  weeklyData: [],
+}
 
 export function SellerDashboard() {
-  const auth = useAuth()
-  const sellerId = (auth.userId && auth.userId.startsWith("seller-")) ? auth.userId : DEFAULT_SELLER_ID
-  const rawListings = MOCK_LISTINGS.filter((l) => l.sellerId === sellerId)
-  const sellerListings = rawListings.length > 0 ? rawListings : MOCK_LISTINGS.filter((l) => l.sellerId === DEFAULT_SELLER_ID)
-  const activeListings = sellerListings.filter((l) => l.status === "active")
-  const sellerName = sellerListings[0]?.sellerName || auth.name || DEFAULT_SELLER_NAME
-  const sellerOrders = MOCK_ORDERS.filter((o) => o.items.some((i) => i.sellerName === sellerName))
-  const revenue = sellerOrders
-    .filter((o) => o.status === "delivered" || o.status === "confirmed")
-    .reduce((sum, o) => sum + o.total, 0)
-  const totalViews = sellerListings.reduce((sum, l) => sum + l.views, 0)
-  const topListing = [...sellerListings].sort((a, b) => b.views - a.views)[0]
-  const recentOrders = sellerOrders.slice(0, 5)
+  const [data, setData] = useState<DashboardData>(DEFAULT_DATA)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
+
+  useEffect(() => {
+    api.get("/api/seller/dashboard").then(setData).catch(() => setError("Failed to load dashboard.")).finally(() => setLoading(false))
+  }, [])
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64 text-on-surface-variant font-body-md dark:text-outline-variant">Loading dashboard...</div>
+  }
+
+  const topListing = data.topListing
+  const weeklyData = data.weeklyData || []
+  const maxRevenue = Math.max(...weeklyData.map((d) => d.revenue), 1)
+  const maxOrders = Math.max(...weeklyData.map((d) => d.orders), 1)
 
   return (
     <div>
       <div className="mb-8">
         <h1 className="font-headline-lg text-headline-lg text-on-surface dark:text-primary-fixed">Dashboard</h1>
         <p className="text-on-surface-variant font-body-md text-body-md dark:text-outline-variant">
-          Welcome back, {sellerListings[0]?.sellerName || "Seller"}
+          Welcome back
         </p>
       </div>
 
+      {error && (
+        <div className="flex items-center gap-3 p-4 mb-6 rounded-xl bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400 border border-red-200 dark:border-red-900/30">
+          <AlertCircle size={20} />
+          <span className="font-label-sm text-label-sm">{error}</span>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard icon={<Package size={24} />} label="Total Listings" value={sellerListings.length} sub={`${activeListings.length} active`} color="green" />
-        <StatCard icon={<Eye size={24} />} label="Total Views" value={totalViews} sub="This month" color="blue" />
-        <StatCard icon={<ShoppingCart size={24} />} label="Orders Received" value={sellerOrders.length} sub={`${sellerOrders.filter(o => o.status === "pending").length} pending`} color="amber" />
-        <StatCard icon={<TrendingUp size={24} />} label="Revenue" value={formatUGX(revenue)} sub="+12% vs last month" color="green" />
+        <StatCard icon={<Package size={24} />} label="Total Listings" value={data.totalListings} sub={`${data.activeListings} active`} color="green" />
+        <StatCard icon={<Eye size={24} />} label="Total Views" value={data.totalViews} sub="This month" color="blue" />
+        <StatCard icon={<ShoppingCart size={24} />} label="Orders Received" value={data.ordersCount} sub={`${data.pendingOrders} pending`} color="amber" />
+        <StatCard icon={<TrendingUp size={24} />} label="Revenue" value={formatUGX(data.revenue)} sub="All time" color="green" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
@@ -87,6 +113,9 @@ export function SellerDashboard() {
                 <span className="text-label-sm text-on-surface-variant dark:text-outline-variant mt-1">{day.label}</span>
               </div>
             ))}
+            {weeklyData.length === 0 && (
+              <div className="w-full text-center text-on-surface-variant dark:text-outline-variant text-label-sm">No data yet</div>
+            )}
           </div>
           <div className="flex items-center gap-4 mt-4 pt-4 border-t border-outline-variant/20 dark:border-surface-container">
             <div className="flex items-center gap-2">
@@ -114,9 +143,9 @@ export function SellerDashboard() {
             <div className="p-4 rounded-xl bg-surface-container/50 dark:bg-surface-container">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Avg. Rating</span>
-                <span className="text-label-sm text-amber-500">&#9733; {(sellerListings.reduce((s, l) => s + l.rating, 0) / Math.max(sellerListings.filter(l => l.rating > 0).length, 1)).toFixed(1)}</span>
+                <span className="text-label-sm text-amber-500">&#9733; {data.avgRating.toFixed(1)}</span>
               </div>
-              <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{sellerListings.filter(l => l.rating > 0).length}</p>
+              <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{data.reviewedListings}</p>
               <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">Reviewed listings</p>
             </div>
             <div className="p-4 rounded-xl bg-surface-container/50 dark:bg-surface-container">
@@ -135,13 +164,13 @@ export function SellerDashboard() {
         <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">Active Listings</h2>
-            <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">{activeListings.length} items</span>
+            <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">{data.recentListings.length} items</span>
           </div>
-          {activeListings.length === 0 ? (
+          {data.recentListings.length === 0 ? (
             <p className="text-on-surface-variant font-body-md dark:text-outline-variant">No active listings yet.</p>
           ) : (
             <div className="space-y-3">
-              {activeListings.slice(0, 5).map((listing) => (
+              {data.recentListings.slice(0, 5).map((listing) => (
                 <div key={listing.id} className="flex items-center justify-between py-2 border-b border-outline-variant/30 last:border-0 dark:border-surface-container">
                   <div className="flex-1 min-w-0">
                     <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{listing.title}</p>
@@ -157,13 +186,13 @@ export function SellerDashboard() {
         <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">Recent Orders</h2>
-            <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">{sellerOrders.length} total</span>
+            <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">{data.ordersCount} total</span>
           </div>
-          {recentOrders.length === 0 ? (
+          {data.recentOrders.length === 0 ? (
             <p className="text-on-surface-variant font-body-md dark:text-outline-variant">No orders yet.</p>
           ) : (
             <div className="space-y-3">
-              {recentOrders.map((order) => (
+              {data.recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-outline-variant/30 last:border-0 dark:border-surface-container">
                   <div className="flex-1 min-w-0">
                     <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{order.id}</p>

@@ -72,7 +72,7 @@ def list_entries(
 
 @router.get("/stats", response_model=WaitlistStats)
 def get_stats(db: Session = Depends(get_db), _=Depends(verify_admin)):
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_start = datetime.now(timezone.utc).replace(tzinfo=None).replace(hour=0, minute=0, second=0, microsecond=0)
     total = db.query(func.count(WaitlistEntry.id)).scalar() or 0
     buyers = db.query(func.count(WaitlistEntry.id)).filter(
         WaitlistEntry.interest.in_(["buyer", "both"])

@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { ShoppingCart, Trash2, Minus, Plus, CheckCircle, ChevronLeft, User, Mail, Phone, MapPin } from "lucide-react"
+import { api } from "../../lib/api"
 import { useCart } from "../../store/cart"
-import { formatUGX } from "../../lib/data"
+import { formatUGX, UGANDAN_DISTRICTS } from "../../lib/data"
 
 type Step = "cart" | "details" | "review" | "success"
 
@@ -15,21 +16,34 @@ export function Cart() {
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
   const [address, setAddress] = useState("")
+  const [district, setDistrict] = useState("Kampala")
   const [paymentMethod, setPaymentMethod] = useState("MTN Mobile Money")
   const [ordering, setOrdering] = useState(false)
   const [orderNumber, setOrderNumber] = useState("")
+  const [error, setError] = useState("")
 
   const subtotal = total()
   const grandTotal = subtotal + DELIVERY_FEE
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     setOrdering(true)
-    setTimeout(() => {
-      setOrderNumber("ORD-" + Date.now().toString(36).toUpperCase())
-      setOrdering(false)
+    setError("")
+    try {
+      const order = await api.post("/api/orders", {
+        items: items.map((i) => ({ listing_id: i.listingId, quantity: i.quantity })),
+        delivery_fee: DELIVERY_FEE,
+        payment_method: paymentMethod,
+        address,
+        district,
+      })
+      setOrderNumber(order.id)
       clearCart()
       setStep("success")
-    }, 1500)
+    } catch (err: any) {
+      setError(err.message)
+    } finally {
+      setOrdering(false)
+    }
   }
 
   if (step === "details") {
@@ -65,8 +79,16 @@ export function Cart() {
             <label className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant block mb-1">Delivery Address</label>
             <div className="relative">
               <MapPin size={16} className="absolute left-3 top-3 text-outline-variant" />
-              <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Plot 14, Kampala Road, Wakiso District" className="w-full pl-9 pr-4 py-3 rounded-lg border border-outline-variant bg-surface-container dark:bg-surface-dim text-on-surface dark:text-primary-fixed text-body-md font-body-md resize-none focus:outline-none focus:ring-2 focus:ring-primary/30" rows={3} />
+              <textarea value={address} onChange={(e) => setAddress(e.target.value)} placeholder="e.g. Plot 14, Kampala Road" className="w-full pl-9 pr-4 py-3 rounded-lg border border-outline-variant bg-surface-container dark:bg-surface-dim text-on-surface dark:text-primary-fixed text-body-md font-body-md resize-none focus:outline-none focus:ring-2 focus:ring-primary/30" rows={3} />
             </div>
+          </div>
+          <div>
+            <label className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant block mb-1">District</label>
+            <select value={district} onChange={(e) => setDistrict(e.target.value)} className="w-full p-3 rounded-lg border border-outline-variant bg-surface-container dark:bg-surface-dim text-on-surface dark:text-primary-fixed text-body-md font-body-md focus:outline-none focus:ring-2 focus:ring-primary/30">
+              {UGANDAN_DISTRICTS.map((d) => (
+                <option key={d} value={d}>{d}</option>
+              ))}
+            </select>
           </div>
         </div>
         <button
@@ -94,6 +116,7 @@ export function Cart() {
             <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline">{email}</p>
             <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline">{phone}</p>
             <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline mt-1 flex items-start gap-1"><MapPin size={14} className="mt-0.5 shrink-0" />{address}</p>
+            <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline mt-1 flex items-start gap-1"><MapPin size={14} className="mt-0.5 shrink-0" />{district}</p>
           </div>
           <div className="bg-surface-container-lowest dark:bg-surface-dim rounded-xl p-4 border border-outline-variant/20">
             <h2 className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed mb-3">Order Summary</h2>
@@ -128,6 +151,7 @@ export function Cart() {
             )}
           </div>
         </div>
+        {error && <p className="font-label-sm text-label-sm text-error mb-3">{error}</p>}
         <button
           onClick={handlePlaceOrder}
           disabled={ordering}

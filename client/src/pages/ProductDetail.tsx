@@ -1,11 +1,28 @@
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { MOCK_LISTINGS, formatUGX, formatDate } from '../lib/data';
+import { api } from '../lib/api';
+import { formatUGX, formatDate, type Listing } from '../lib/data';
 import { Button } from '../components/ui/Button';
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const listing = MOCK_LISTINGS.find((l) => l.id === id);
+  const [listing, setListing] = useState<Listing | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!id) return
+    setLoading(true)
+    api.get(`/api/listings/${id}`).then(setListing).catch(() => setListing(null)).finally(() => setLoading(false))
+  }, [id])
+
+  if (loading) {
+    return (
+      <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-32">
+        <p className="text-on-surface-variant font-body-lg text-center py-20 dark:text-outline-variant">Loading...</p>
+      </div>
+    );
+  }
 
   if (!listing) {
     return (

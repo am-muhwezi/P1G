@@ -1,9 +1,10 @@
-import { useState } from "react"
-import { useAuth } from "../../store/auth"
-import { MOCK_LISTINGS, formatUGX, formatDate, type Listing, type Category, CATEGORY_LABELS } from "../../lib/data"
+import { useState, useEffect } from "react"
+import { api } from "../../lib/api"
+import { formatUGX, formatDate, type Listing, type Category, CATEGORY_LABELS } from "../../lib/data"
 import { Plus, Search, Pencil, Trash2, X, Package, Eye } from "lucide-react"
-
-const DEFAULT_SELLER_ID = "seller-1"
+import { useToast } from "../../store/toast"
+import { ToastContainer } from "../../components/ui/ToastContainer"
+import { ConfirmModal } from "../../components/ui/ConfirmModal"
 
 const statusColor: Record<string, string> = {
   active: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
@@ -20,13 +21,13 @@ function StatusPill({ status }: { status: string }) {
 }
 
 export function SellerListings() {
-  const auth = useAuth()
-  const sellerId = (auth.userId && auth.userId.startsWith("seller-")) ? auth.userId : DEFAULT_SELLER_ID
-  const rawListings = MOCK_LISTINGS.filter((l) => l.sellerId === sellerId)
-  const [listings, setListings] = useState(() => rawListings.length > 0 ? rawListings : MOCK_LISTINGS.filter((l) => l.sellerId === DEFAULT_SELLER_ID))
+  const [listings, setListings] = useState<Listing[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [showForm, setShowForm] = useState(false)
   const [editing, setEditing] = useState<Listing | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
 
   const [form, setForm] = useState({
     title: "",
@@ -38,11 +39,26 @@ export function SellerListings() {
     district: "",
   })
 
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const toast = useToast((s) => s.toast)
+
+  const fetchListings = () => {
+    setLoading(true)
+    api.get("/api/seller/listings")
+      .then(setListings)
+      .catch(() => setError("Failed to load listings"))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { fetchListings() }, [])
+
   const filtered = listings.filter((l) => l.title.toLowerCase().includes(search.toLowerCase()))
 
   const openCreate = () => {
     setEditing(null)
     setForm({ title: "", description: "", category: "live_pigs", price: 0, stock: 1, unit: "pig", district: "" })
+    setError("")
     setShowForm(true)
   }
 
@@ -57,48 +73,56 @@ export function SellerListings() {
       unit: listing.unit,
       district: listing.district,
     })
+    setError("")
     setShowForm(true)
   }
 
-  const handleSave = () => {
-    if (editing) {
-      setListings((prev) =>
-        prev.map((l) =>
-          l.id === editing.id ? { ...l, ...form, price: form.price } : l,
-        ),
-      )
-    } else {
-      const newListing: Listing = {
-        id: `lst-${Date.now()}`,
-        sellerId,
-        sellerName: auth.name || "Seller",
-        sellerVerified: false,
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        price: form.price,
-        stock: form.stock,
-        unit: form.unit,
-        district: form.district,
-        status: "pending",
-        views: 0,
-        rating: 0,
-        reviewCount: 0,
-        createdAt: new Date().toISOString().slice(0, 10),
+  const handleSave = async () => {
+    setSaving(true)
+    setError("")
+    try {
+      if (editing) {
+        const updated = await api.put(`/api/seller/listings/${editing.id}`, form)
+        setListings((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
+        toast("Listing updated")
+      } else {
+        const created = await api.post("/api/seller/listings", form)
+        setListings((prev) => [created, ...prev])
+        toast("Listing created")
       }
-      setListings((prev) => [newListing, ...prev])
+      setShowForm(false)
+      setEditing(null)
+    } catch (err: any) {
+      setError(err.message)
+      toast(err.message, "error")
+    } finally {
+      setSaving(false)
     }
-    setShowForm(false)
-    setEditing(null)
   }
 
-  const handleDelete = (id: string) => {
-    setListings((prev) => prev.filter((l) => l.id !== id))
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await api.del(`/api/seller/listings/${deleteTarget.id}`)
+      setListings((prev) => prev.filter((l) => l.id !== deleteTarget.id))
+      toast("Listing deleted")
+      setDeleteTarget(null)
+    } catch (err: any) {
+      toast(err.message, "error")
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   const activeCount = listings.filter((l) => l.status === "active").length
   const pendingCount = listings.filter((l) => l.status === "pending").length
   const totalViews = listings.reduce((s, l) => s + l.views, 0)
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64 text-on-surface-variant font-body-md dark:text-outline-variant">Loading listings...</div>
+  }
 
   return (
     <div>
@@ -149,6 +173,8 @@ export function SellerListings() {
         </div>
       </div>
 
+      {error && <div className="mb-4 p-3 rounded-xl bg-red-50 text-red-600 dark:bg-red-900/20 dark:text-red-400 font-label-sm text-label-sm">{error}</div>}
+
       <div className="relative mb-6">
         <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-outline dark:text-outline-variant" />
         <input
@@ -195,7 +221,7 @@ export function SellerListings() {
                       <button onClick={() => openEdit(listing)} className="p-2 rounded-lg text-outline hover:text-primary hover:bg-surface-container transition-colors dark:text-outline-variant dark:hover:text-primary-fixed dark:hover:bg-surface-container">
                         <Pencil size={16} />
                       </button>
-                      <button onClick={() => handleDelete(listing.id)} className="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/20 transition-colors dark:text-outline-variant">
+                      <button onClick={() => setDeleteTarget({ id: listing.id, title: listing.title })} className="p-2 rounded-lg text-outline hover:text-error hover:bg-error-container/20 transition-colors dark:text-outline-variant">
                         <Trash2 size={16} />
                       </button>
                     </div>
@@ -214,54 +240,67 @@ export function SellerListings() {
               <h2 className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">
                 {editing ? "Edit Listing" : "Add Listing"}
               </h2>
-              <button onClick={() => { setShowForm(false); setEditing(null) }} className="text-on-surface-variant hover:text-on-surface dark:text-outline-variant dark:hover:text-primary-fixed">
+              <button onClick={() => { setShowForm(false); setEditing(null); setError("") }} className="text-on-surface-variant hover:text-on-surface dark:text-outline-variant dark:hover:text-primary-fixed">
                 <X size={24} />
               </button>
             </div>
             <div className="p-6 space-y-4">
               <Field label="Title">
-                <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
               </Field>
               <Field label="Description">
-                <textarea className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md resize-none h-24 dark:bg-surface-dim dark:text-primary-fixed" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <textarea className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md resize-none h-24 dark:bg-surface-container dark:text-primary-fixed" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Category">
-                  <select className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>
+                  <select className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>
                     {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
                       <option key={key} value={key}>{label}</option>
                     ))}
                   </select>
                 </Field>
                 <Field label="District">
-                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} />
+                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} />
                 </Field>
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <Field label="Price (UGX)">
-                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
                 </Field>
                 <Field label="Stock">
-                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
+                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
                 </Field>
                 <Field label="Unit">
-                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
                 </Field>
               </div>
+              {error && <p className="font-label-sm text-label-sm text-error">{error}</p>}
             </div>
             <div className="flex justify-end gap-3 p-6 border-t border-outline-variant/30 dark:border-surface-container">
-              <button onClick={() => { setShowForm(false); setEditing(null) }} className="px-6 py-3 rounded-xl font-label-lg text-label-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors dark:border-outline dark:text-outline-variant dark:hover:bg-surface-container">Cancel</button>
+              <button onClick={() => { setShowForm(false); setEditing(null); setError("") }} className="px-6 py-3 rounded-xl font-label-lg text-label-lg border border-outline-variant text-on-surface-variant hover:bg-surface-container transition-colors dark:border-outline dark:text-outline-variant dark:hover:bg-surface-container">Cancel</button>
               <button
                 onClick={handleSave}
-                disabled={!form.title || !form.price}
+                disabled={!form.title || !form.price || saving}
                 className="px-6 py-3 rounded-xl font-label-lg text-label-lg bg-primary text-on-primary hover:bg-primary/90 transition-colors disabled:opacity-50 dark:bg-primary-fixed dark:text-on-primary-fixed"
               >
-                {editing ? "Save Changes" : "Create Listing"}
+                {saving ? "Saving..." : editing ? "Save Changes" : "Create Listing"}
               </button>
             </div>
           </div>
         </div>
       )}
+
+      <ToastContainer />
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete Listing"
+        message={`Are you sure you want to delete "${deleteTarget?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
     </div>
   )
 }

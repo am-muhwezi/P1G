@@ -1,9 +1,7 @@
-import { useState } from "react"
-import { useAuth } from "../../store/auth"
-import { MOCK_ORDERS, formatUGX, formatDate, type Order } from "../../lib/data"
+import { useState, useEffect } from "react"
+import { api } from "../../lib/api"
+import { formatUGX, formatDate, type Order } from "../../lib/data"
 import { Search, ChevronDown, ChevronUp, MessageSquare, CheckCheck, X, ShoppingCart, Clock, CheckCircle, DollarSign } from "lucide-react"
-
-const DEFAULT_SELLER_NAME = "Mukasa Farms"
 
 const statusColor: Record<string, string> = {
   pending: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20",
@@ -46,7 +44,7 @@ function OrderRow({ order }: { order: Order }) {
           <td colSpan={6} className="px-4 py-4">
             <div className="space-y-2">
               <p className="font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Items</p>
-              {order.items.map((item, idx) => (
+              {(order.items || []).map((item, idx) => (
                 <div key={idx} className="flex items-center justify-between py-1">
                   <span className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{item.title}</span>
                   <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">
@@ -145,21 +143,21 @@ const tabs = ["Orders", "Messages"] as const
 type Tab = (typeof tabs)[number]
 
 export function SellerOrders() {
-  const auth = useAuth()
-  const sellerName = auth.name || DEFAULT_SELLER_NAME
+  const [orders, setOrders] = useState<Order[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
   const [activeTab, setActiveTab] = useState<Tab>("Orders")
 
-  const rawOrders = MOCK_ORDERS.filter((o) =>
-    o.items.some((i) => i.sellerName === sellerName),
-  )
-  const allOrders = rawOrders.length > 0
-    ? rawOrders
-    : MOCK_ORDERS.filter((o) => o.items.some((i) => i.sellerName === DEFAULT_SELLER_NAME))
+  useEffect(() => {
+    api.get("/api/seller/orders")
+      .then(setOrders)
+      .catch(console.error)
+      .finally(() => setLoading(false))
+  }, [])
 
-  const pendingCount = allOrders.filter((o) => o.status === "pending").length
-  const confirmedCount = allOrders.filter((o) => o.status === "confirmed" || o.status === "in_transit").length
-  const totalRevenue = allOrders.filter((o) => o.status === "delivered" || o.status === "confirmed").reduce((s, o) => s + o.total, 0)
+  const pendingCount = orders.filter((o) => o.status === "pending").length
+  const confirmedCount = orders.filter((o) => o.status === "confirmed" || o.status === "in_transit").length
+  const totalRevenue = orders.filter((o) => o.status === "delivered" || o.status === "confirmed").reduce((s, o) => s + o.total, 0)
 
   return (
     <div>
@@ -175,7 +173,7 @@ export function SellerOrders() {
           <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2 dark:bg-emerald-900/20 dark:text-emerald-400">
             <ShoppingCart size={18} />
           </div>
-          <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{allOrders.length}</p>
+          <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{orders.length}</p>
           <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">Total Orders</p>
         </div>
         <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container">
@@ -218,11 +216,11 @@ export function SellerOrders() {
       </div>
 
       {activeTab === "Orders" ? (
-        <OrdersPanel search={search} setSearch={setSearch} filtered={allOrders.filter(
+        <OrdersPanel search={search} setSearch={setSearch} filtered={orders.filter(
           (o) =>
             o.id.toLowerCase().includes(search.toLowerCase()) ||
             o.buyerName.toLowerCase().includes(search.toLowerCase()),
-        )} />
+        )} loading={loading} />
       ) : (
         <MessagesPanel />
       )}
@@ -230,7 +228,7 @@ export function SellerOrders() {
   )
 }
 
-function OrdersPanel({ search, setSearch, filtered }: { search: string; setSearch: (s: string) => void; filtered: Order[] }) {
+function OrdersPanel({ search, setSearch, filtered, loading }: { search: string; setSearch: (s: string) => void; filtered: Order[]; loading: boolean }) {
   return (
     <>
       <div className="relative mb-6">
@@ -243,31 +241,35 @@ function OrdersPanel({ search, setSearch, filtered }: { search: string; setSearc
         />
       </div>
 
-      <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high overflow-x-auto dark:bg-surface-dim dark:border-surface-container">
-        <table className="w-full text-left">
-          <thead>
-            <tr className="border-b border-outline-variant/30 dark:border-surface-container">
-              <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Order ID</th>
-              <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Buyer</th>
-              <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Date</th>
-              <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Total</th>
-              <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Status</th>
-              <th className="px-4 py-4" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-on-surface-variant font-body-md dark:text-outline-variant">
-                  No orders found.
-                </td>
+      {loading ? (
+        <div className="flex items-center justify-center h-40 text-on-surface-variant font-body-md dark:text-outline-variant">Loading orders...</div>
+      ) : (
+        <div className="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high overflow-x-auto dark:bg-surface-dim dark:border-surface-container">
+          <table className="w-full text-left">
+            <thead>
+              <tr className="border-b border-outline-variant/30 dark:border-surface-container">
+                <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Order ID</th>
+                <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Buyer</th>
+                <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Date</th>
+                <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Total</th>
+                <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Status</th>
+                <th className="px-4 py-4" />
               </tr>
-            ) : (
-              filtered.map((order) => <OrderRow key={order.id} order={order} />)
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-12 text-center text-on-surface-variant font-body-md dark:text-outline-variant">
+                    No orders found.
+                  </td>
+                </tr>
+              ) : (
+                filtered.map((order) => <OrderRow key={order.id} order={order} />)
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
     </>
   )
 }

@@ -1,21 +1,25 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../../store/auth"
 import { useTheme } from "../../context/ThemeContext"
 import { useNavigate } from "react-router-dom"
 import { Sun, Moon, Bell, Shield, LogOut, Mail, MapPin, Calendar, Smartphone } from "lucide-react"
-import { MOCK_USERS, MOCK_ORDERS, formatUGX } from "../../lib/data"
+import { api } from "../../lib/api"
+import { formatUGX, type Order } from "../../lib/data"
 
 export function BuyerProfile() {
   const auth = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
-  const user = MOCK_USERS.find((u) => u.id === auth.userId)
-  const userName = auth.name || "John Buyer"
-  const userOrders = MOCK_ORDERS.filter((o) => o.buyerName === userName)
-  const totalSpent = userOrders.reduce((s, o) => s + o.total, 0)
-  const deliveredCount = userOrders.filter((o) => o.status === "delivered").length
+  const [orders, setOrders] = useState<Order[]>([])
   const [orderNotify, setOrderNotify] = useState(true)
   const [promoNotify, setPromoNotify] = useState(false)
+
+  useEffect(() => {
+    api.get("/api/orders").then(setOrders).catch(() => {})
+  }, [])
+
+  const totalSpent = orders.reduce((s, o) => s + o.total, 0)
+  const deliveredCount = orders.filter((o) => o.status === "delivered").length
 
   const toggleClass = (on: boolean) =>
     `relative w-12 h-6 rounded-full transition-colors ${on ? "bg-primary dark:bg-primary-fixed" : "bg-outline-variant dark:bg-surface-container-highest"}`
@@ -42,7 +46,7 @@ export function BuyerProfile() {
 
         <div className="grid grid-cols-3 gap-px bg-outline-variant/20 dark:bg-surface-container">
           <div className="bg-surface-container-lowest dark:bg-surface-dim p-4 text-center">
-            <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{userOrders.length}</p>
+            <p className="font-headline-md text-headline-md text-on-surface dark:text-primary-fixed">{orders.length}</p>
             <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">Orders</p>
           </div>
           <div className="bg-surface-container-lowest dark:bg-surface-dim p-4 text-center">
@@ -59,15 +63,15 @@ export function BuyerProfile() {
           <div className="px-6 py-4 space-y-4">
             <div className="flex items-center gap-3">
               <Mail size={18} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">{user?.email || auth.userId + "@example.com"}</span>
+              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">{auth.email || "N/A"}</span>
             </div>
             <div className="flex items-center gap-3">
               <MapPin size={18} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">{user?.district || "Kampala, Uganda"}</span>
+              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Kampala, Uganda</span>
             </div>
             <div className="flex items-center gap-3">
               <Calendar size={18} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Joined {user?.joinedAt ? new Date(user.joinedAt).toLocaleDateString("en-UG", { year: "numeric", month: "long" }) : "January 2025"}</span>
+              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Member</span>
             </div>
           </div>
         </div>
