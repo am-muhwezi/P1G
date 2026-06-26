@@ -9,7 +9,6 @@ async function request(method: string, path: string, body?: unknown) {
   if (state.token) headers["x-token"] = state.token
   const res = await fetch(`${BASE}${path}`, { method, headers, body: body ? JSON.stringify(body) : undefined })
   if (!res.ok) {
-    if (res.status === 401) state.logout()
     const detail = await res.json().then((d) => d.detail).catch(() => null)
     throw new Error(detail || `Request failed (${res.status})`)
   }

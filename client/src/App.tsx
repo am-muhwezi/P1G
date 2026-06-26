@@ -1,11 +1,10 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from './context/ThemeContext';
 import { Layout } from './components/layout/Layout';
 import { AppShell } from './components/layout/AppShell';
 import { AdminLayout } from './components/layout/AdminLayout';
 import { BuyerLayout } from './components/layout/BuyerLayout';
 import { RequireAuth } from './components/auth/RequireAuth';
-import ComingSoon from './pages/ComingSoon';
 import { Landing } from './pages/Landing';
 import { Marketplace } from './pages/Marketplace';
 import { ProductDetail } from './pages/ProductDetail';
@@ -38,7 +37,7 @@ import { Suspended } from './pages/Suspended';
 const API = import.meta.env.VITE_API_URL
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { token, logout, login } = useAuth()
+  const { token, login } = useAuth()
   const [ready, setReady] = useState(!token)
 
   useEffect(() => {
@@ -46,12 +45,12 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     const revalidate = async () => {
       try {
         const res = await fetch(`${API}/api/auth/me`, { headers: { "x-token": token } })
-        if (!res.ok) { logout(); setReady(true); return }
+        if (!res.ok) { setReady(true); return }
         const data = await res.json()
         if (data.status === "suspended") {
           login(data.role, data.id, data.name, data.token, data.email, data.status)
         }
-      } catch { logout() }
+      } catch { /* ignore */ }
       setReady(true)
     }
     revalidate()
@@ -67,8 +66,7 @@ export default function App() {
       <AuthGate>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<ComingSoon />} />
-          <Route path="/waitlist" element={<ComingSoon />} />
+          <Route path="/" element={<Navigate to="/market" replace />} />
           <Route element={<Layout />}>
             <Route path="/home" element={<Landing />} />
             <Route path="/market" element={<Marketplace />} />

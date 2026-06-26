@@ -103,7 +103,7 @@ def list_orders(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    item_ids = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().subquery()
+    item_ids = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().scalar_subquery()
     q = db.query(Order).filter(Order.id.in_(item_ids))
     if status:
         q = q.filter(Order.status == status)
@@ -139,7 +139,7 @@ def dashboard(
     listings = db.query(Listing).filter(Listing.seller_id == user.id).all()
     active = [l for l in listings if l.status == "active"]
 
-    item_ids_q = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().subquery()
+    item_ids_q = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().scalar_subquery()
     orders = db.query(Order).filter(Order.id.in_(item_ids_q)).order_by(Order.created_at.desc()).all()
 
     delivered_or_confirmed = [o for o in orders if o.status in ("delivered", "confirmed")]
@@ -195,7 +195,7 @@ def analytics(
 ):
     listings = db.query(Listing).filter(Listing.seller_id == user.id).all()
 
-    item_ids_q = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().subquery()
+    item_ids_q = db.query(OrderItem.order_id).filter(OrderItem.seller_id == user.id).distinct().scalar_subquery()
     orders = db.query(Order).filter(Order.id.in_(item_ids_q)).all()
 
     delivered = [o for o in orders if o.status == "delivered"]

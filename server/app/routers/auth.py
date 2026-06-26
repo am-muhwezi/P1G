@@ -50,7 +50,6 @@ def login(data: LoginRequest, db: Session = Depends(get_db)):
     if not user or not bcrypt.checkpw(data.password.encode(), user.password_hash.encode()):
         raise HTTPException(status_code=401, detail="Invalid email or password")
 
-    user.token = str(uuid.uuid4())
     db.commit()
     db.refresh(user)
     return user
