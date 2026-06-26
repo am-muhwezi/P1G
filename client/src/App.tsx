@@ -33,6 +33,10 @@ import { AdminUsers } from './pages/admin/AdminUsers';
 import { AdminListings } from './pages/admin/AdminListings';
 import { AdminSettings } from './pages/admin/AdminSettings';
 import { Suspended } from './pages/Suspended';
+import { ToastContainer } from './components/ui/ToastContainer';
+import { OfflineBanner } from './components/ui/OfflineBanner';
+import { useNetwork } from './store/network';
+import { api } from './lib/api';
 
 const API = import.meta.env.VITE_API_URL
 
@@ -61,10 +65,29 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const onOnline = () => {
+      useNetwork.getState().setOnline(true)
+      const queued = useNetwork.getState().flush()
+      for (const req of queued) {
+        api.retry(req).catch(() => {})
+      }
+    }
+    const onOffline = () => useNetwork.getState().setOnline(false)
+    window.addEventListener("online", onOnline)
+    window.addEventListener("offline", onOffline)
+    return () => {
+      window.removeEventListener("online", onOnline)
+      window.removeEventListener("offline", onOffline)
+    }
+  }, [])
+
   return (
     <ThemeProvider>
       <AuthGate>
       <BrowserRouter>
+        <OfflineBanner />
+        <ToastContainer />
         <Routes>
           <Route path="/" element={<Navigate to="/market" replace />} />
           <Route element={<Layout />}>

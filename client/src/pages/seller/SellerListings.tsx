@@ -3,7 +3,6 @@ import { api } from "../../lib/api"
 import { formatUGX, formatDate, type Listing, type Category, CATEGORY_LABELS } from "../../lib/data"
 import { Plus, Search, Pencil, Trash2, X, Package, Eye } from "lucide-react"
 import { useToast } from "../../store/toast"
-import { ToastContainer } from "../../components/ui/ToastContainer"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
 
 const statusColor: Record<string, string> = {
@@ -289,8 +288,6 @@ export function SellerListings() {
           </div>
         </div>
       )}
-
-      <ToastContainer />
 
       <ConfirmModal
         open={!!deleteTarget}

@@ -8,7 +8,7 @@ import { UGANDAN_DISTRICTS } from "../../lib/data"
 const API = import.meta.env.VITE_API_URL
 
 export function SignupSeller() {
-  const [form, setForm] = useState({ farm_name: "", email: "", phone: "", password: "", district: "" })
+  const [form, setForm] = useState({ farm_name: "", email: "", phone: "+256 7", password: "", district: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -17,6 +17,13 @@ export function SignupSeller() {
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handlePhone = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleaned = e.target.value.replace(/[^\d+]/g, "")
+    if (!cleaned.startsWith("+256")) { setForm((f) => ({ ...f, phone: "+256 7" })); return }
+    const digits = cleaned.slice(4)
+    setForm((f) => ({ ...f, phone: `+256 ${digits}` }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,9 +96,9 @@ export function SignupSeller() {
               <input
                 className="w-full px-4 py-3 bg-warm-beige border-none rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed dark:placeholder:text-outline"
                 type="tel"
-                placeholder="0755 123 456"
+                placeholder="+256 712 345 678"
                 value={form.phone}
-                onChange={update("phone")}
+                onChange={handlePhone}
                 required
               />
             </div>

@@ -8,7 +8,7 @@ import { UGANDAN_DISTRICTS } from "../../lib/data"
 const API = import.meta.env.VITE_API_URL
 
 export function SignupBuyer() {
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "", district: "" })
+  const [form, setForm] = useState({ name: "", email: "", phone: "+256 7", password: "", district: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
@@ -17,6 +17,13 @@ export function SignupBuyer() {
 
   const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [field]: e.target.value }))
+
+  const handlePhone = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const cleaned = e.target.value.replace(/[^\d+]/g, "")
+    if (!cleaned.startsWith("+256")) { setForm((f) => ({ ...f, phone: "+256 7" })); return }
+    const digits = cleaned.slice(4)
+    setForm((f) => ({ ...f, phone: `+256 ${digits}` }))
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -85,14 +92,14 @@ export function SignupBuyer() {
             <label className="font-label-sm text-label-sm text-on-surface dark:text-primary-fixed block mb-1">
               Phone
             </label>
-            <input
-              className="w-full px-4 py-3 bg-warm-beige border-none rounded-xl focus:ring-2 focus:ring-secondary text-body-md dark:bg-surface-dim dark:text-primary-fixed dark:placeholder:text-outline"
-              type="tel"
-              placeholder="0772 345 678"
-              value={form.phone}
-              onChange={update("phone")}
-              required
-            />
+              <input
+                className="w-full px-4 py-3 bg-warm-beige border-none rounded-xl focus:ring-2 focus:ring-secondary text-body-md dark:bg-surface-dim dark:text-primary-fixed dark:placeholder:text-outline"
+                type="tel"
+                placeholder="+256 712 345 678"
+                value={form.phone}
+                onChange={handlePhone}
+                required
+              />
           </div>
           <div>
             <label className="font-label-sm text-label-sm text-on-surface dark:text-primary-fixed block mb-1">
