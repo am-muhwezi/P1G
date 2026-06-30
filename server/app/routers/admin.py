@@ -1,7 +1,7 @@
 import csv
 import io
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 import bcrypt
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -24,6 +24,7 @@ from app.schemas.admin import (
     AdminUserUpdate,
     AdminUserStatusUpdate,
     AdminListingResponse,
+    AdminListingDetailResponse,
     AdminListingStatusUpdate,
     AdminOrderResponse,
     AdminOrderItemResponse,
@@ -148,9 +149,8 @@ def analytics(db: Session = Depends(get_db), _: User = Depends(require_admin)):
     now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
     weekly_revenue = []
     for i in range(6, -1, -1):
-        day = now_naive.replace(hour=0, minute=0, second=0, microsecond=0)
-        day_start = day.replace(day=day.day - i)
-        day_end = day_start.replace(day=day_start.day + 1)
+        day_start = (now_naive - timedelta(days=i)).replace(hour=0, minute=0, second=0, microsecond=0)
+        day_end = day_start + timedelta(days=1)
         day_rev = db.query(func.sum(Order.total)).filter(
             Order.status.in_(["delivered", "confirmed"]),
             Order.updated_at >= day_start,
@@ -258,6 +258,19 @@ def user_detail(
     return resp
 
 
+@router.get("/users/{user_id}/listings", response_model=list[AdminListingResponse])
+def user_listings(
+    user_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    listings = db.query(Listing).filter(Listing.seller_id == user_id).order_by(Listing.created_at.desc()).all()
+    return listings
+
+
 @router.patch("/users/{user_id}/status", response_model=AdminUserResponse)
 def update_user_status(
     user_id: str,
@@ -296,6 +309,41 @@ def list_listings(
         )
     order = Listing.created_at.desc() if sort != "asc" else Listing.created_at.asc()
     return q.order_by(order).all()
+
+
+@router.get("/listings/{listing_id}", response_model=AdminListingDetailResponse)
+def listing_detail(
+    listing_id: str,
+    db: Session = Depends(get_db),
+    _: User = Depends(require_admin),
+):
+    listing = db.query(Listing).filter(Listing.id == listing_id).first()
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    seller = db.query(User).filter(User.id == listing.seller_id).first()
+    detail = AdminListingDetailResponse(
+        id=listing.id,
+        seller_id=listing.seller_id,
+        seller_name=listing.seller_name,
+        seller_verified=listing.seller_verified,
+        title=listing.title,
+        description=listing.description,
+        category=listing.category,
+        price=listing.price,
+        stock=listing.stock,
+        unit=listing.unit,
+        district=listing.district,
+        status=listing.status,
+        views=listing.views,
+        rating=listing.rating,
+        review_count=listing.review_count,
+        image=listing.image,
+        created_at=listing.created_at,
+        updated_at=listing.updated_at,
+        sellerStatus=seller.status if seller else "",
+        sellerEmail=seller.email if seller else "",
+    )
+    return detail
 
 
 @router.patch("/listings/{listing_id}/status", response_model=AdminListingResponse)

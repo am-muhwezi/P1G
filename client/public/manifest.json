@@ -1,0 +1,39 @@
+{
+  "name": "P1G Katale — Uganda's Livestock Marketplace",
+  "short_name": "P1G Katale",
+  "description": "Uganda's premier livestock marketplace and escrow platform. Buy and sell pigs, feed, semen, and veterinary services.",
+  "start_url": "/market",
+  "display": "standalone",
+  "background_color": "#e8fff0",
+  "theme_color": "#0d631b",
+  "orientation": "portrait-primary",
+  "categories": ["marketplace", "agriculture", "business"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [],
+  "prefer_related_applications": false
+}

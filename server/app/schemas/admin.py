@@ -55,6 +55,13 @@ class AdminListingResponse(BaseModel):
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 
+class AdminListingDetailResponse(AdminListingResponse):
+    sellerStatus: str = ""
+    sellerEmail: str = ""
+
+    model_config = {"from_attributes": True, "populate_by_name": True}
+
+
 class AdminOrderItemResponse(BaseModel):
     listingId: str = Field(alias="listing_id")
     title: str

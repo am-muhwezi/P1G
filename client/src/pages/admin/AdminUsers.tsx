@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
-import { formatDate } from "../../lib/data"
-import { Search, Shield, ShieldCheck, ShieldX, Users, UserPlus, Store, UserCog, X, AlertTriangle } from "lucide-react"
+import { formatDate, formatUGX, CATEGORY_LABELS } from "../../lib/data"
+import { Search, Shield, ShieldCheck, ShieldX, Users, UserPlus, Store, UserCog, X, AlertTriangle, Trash2, Package, Eye } from "lucide-react"
+import { ConfirmModal } from "../../components/ui/ConfirmModal"
 
 interface UserData {
   id: string
@@ -32,6 +33,18 @@ interface UserDetail {
   revenue: number
 }
 
+interface ListingData {
+  id: string
+  title: string
+  sellerName: string
+  category: string
+  price: number
+  status: string
+  views: number
+  createdAt: string
+  district: string
+}
+
 const roleIcon: Record<string, React.ReactNode> = {
   admin: <ShieldCheck size={16} />,
   seller: <Shield size={16} />,
@@ -44,6 +57,11 @@ export function AdminUsers() {
   const [search, setSearch] = useState("")
   const [selectedUser, setSelectedUser] = useState<UserDetail | null>(null)
   const [actionLoading, setActionLoading] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [deleting, setDeleting] = useState(false)
+  const [showListings, setShowListings] = useState(false)
+  const [userListings, setUserListings] = useState<ListingData[]>([])
+  const [listingsLoading, setListingsLoading] = useState(false)
 
   useEffect(() => {
     api.get("/api/admin/users").then(setUsers).catch(() => setUsers([])).finally(() => setLoading(false))
@@ -82,6 +100,33 @@ export function AdminUsers() {
       // ignore
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      await api.del(`/api/admin/users/${deleteTarget.id}`)
+      setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id))
+      setDeleteTarget(null)
+    } catch {
+      setDeleteTarget(null)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const openListings = async (userId: string) => {
+    setShowListings(true)
+    setListingsLoading(true)
+    try {
+      const data = await api.get(`/api/admin/users/${userId}/listings`) as ListingData[]
+      setUserListings(data)
+    } catch {
+      setUserListings([])
+    } finally {
+      setListingsLoading(false)
     }
   }
 
@@ -167,15 +212,16 @@ export function AdminUsers() {
                   <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Status</th>
                   <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">District</th>
                   <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Joined</th>
+                  <th className="px-4 py-4 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-on-surface-variant font-body-md dark:text-outline-variant">
-                      No users found.
-                    </td>
-                  </tr>
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-on-surface-variant font-body-md dark:text-outline-variant">
+                        No users found.
+                      </td>
+                    </tr>
                 ) : (
                   filtered.map((user) => (
                     <tr
@@ -207,6 +253,15 @@ export function AdminUsers() {
                       <td className="px-4 py-4 text-label-sm text-on-surface-variant dark:text-outline-variant">{user.district || "--"}</td>
                       <td className="px-4 py-4 text-label-sm text-on-surface-variant dark:text-outline-variant">
                         {formatDate(user.createdAt)}
+                      </td>
+                      <td className="px-4 py-4">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: user.id, name: user.name }) }}
+                          className="text-on-surface-variant hover:text-error transition-colors dark:text-outline-variant dark:hover:text-error"
+                          title="Delete user"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -275,7 +330,10 @@ export function AdminUsers() {
             </div>
 
             <div className="grid grid-cols-3 gap-3 mb-6">
-              <div className="p-3 rounded-lg bg-surface-container/50 dark:bg-surface-container/20 text-center">
+              <div
+                className="p-3 rounded-lg bg-surface-container/50 dark:bg-surface-container/20 text-center cursor-pointer hover:bg-surface-container dark:hover:bg-surface-container/40 transition-colors"
+                onClick={() => openListings(selectedUser.id)}
+              >
                 <p className="font-headline-sm text-headline-sm text-on-surface dark:text-primary-fixed">{selectedUser.listingsCount}</p>
                 <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">Listings</p>
               </div>
@@ -291,19 +349,101 @@ export function AdminUsers() {
               </div>
             </div>
 
-            {selectedUser.role !== "admin" && (
+            <div className="flex flex-col gap-2">
+              {selectedUser.role !== "admin" && (
+                <button
+                  onClick={toggleSuspension}
+                  disabled={actionLoading}
+                  className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-label-lg text-label-lg transition-colors ${
+                    selectedUser.status === "suspended"
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
+                      : "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
+                  }`}
+                >
+                  <AlertTriangle size={18} />
+                  {actionLoading ? "Processing..." : selectedUser.status === "suspended" ? "Reactivate Account" : "Suspend Account"}
+                </button>
+              )}
               <button
-                onClick={toggleSuspension}
-                disabled={actionLoading}
-                className={`w-full flex items-center justify-center gap-2 py-3 rounded-xl font-label-lg text-label-lg transition-colors ${
-                  selectedUser.status === "suspended"
-                    ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/20 dark:text-emerald-400"
-                    : "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400"
-                }`}
+                onClick={() => { setSelectedUser(null); setDeleteTarget({ id: selectedUser.id, name: selectedUser.name }) }}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-label-lg text-label-lg bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-900/20 dark:text-red-400 transition-colors"
               >
-                <AlertTriangle size={18} />
-                {actionLoading ? "Processing..." : selectedUser.status === "suspended" ? "Reactivate Account" : "Suspend Account"}
+                <Trash2 size={18} />
+                Delete User
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Delete User"
+        message={`Are you sure you want to permanently delete "${deleteTarget?.name}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
+
+      {showListings && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setShowListings(false)}>
+          <div
+            className="bg-surface-container-lowest dark:bg-surface-dim rounded-2xl p-6 w-full max-w-2xl mx-4 shadow-xl border border-surface-container-high dark:border-surface-container max-h-[80vh] flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4 shrink-0">
+              <h2 className="font-headline-sm text-headline-sm text-on-surface dark:text-primary-fixed">User Listings</h2>
+              <button onClick={() => setShowListings(false)} className="text-on-surface-variant hover:text-on-surface dark:text-outline-variant dark:hover:text-primary-fixed">
+                <X size={20} />
+              </button>
+            </div>
+
+            {listingsLoading ? (
+              <div className="flex items-center justify-center h-48">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+              </div>
+            ) : userListings.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-48 text-on-surface-variant dark:text-outline-variant">
+                <Package size={40} className="mb-3 opacity-40" />
+                <p className="font-body-md text-body-md">No listings found for this user.</p>
+              </div>
+            ) : (
+              <div className="overflow-y-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-outline-variant/30 dark:border-surface-container">
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Product</th>
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Category</th>
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Price</th>
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Status</th>
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Views</th>
+                      <th className="px-4 py-3 font-label-sm text-label-sm text-on-surface-variant dark:text-outline-variant">Posted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {userListings.map((listing) => (
+                      <tr key={listing.id} className="border-b border-outline-variant/20 dark:border-surface-container hover:bg-surface-container/50 transition-colors">
+                        <td className="px-4 py-3">
+                          <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{listing.title}</p>
+                        </td>
+                        <td className="px-4 py-3 text-label-sm text-on-surface-variant dark:text-outline-variant">
+                          {CATEGORY_LABELS[listing.category as keyof typeof CATEGORY_LABELS] || listing.category}
+                        </td>
+                        <td className="px-4 py-3 font-label-lg text-label-lg text-primary dark:text-primary-fixed">{formatUGX(listing.price)}</td>
+                        <td className="px-4 py-3">{statusPill(listing.status)}</td>
+                        <td className="px-4 py-3 text-label-sm text-on-surface-variant dark:text-outline-variant">
+                          <div className="flex items-center gap-1">
+                            <Eye size={14} />
+                            {listing.views}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-label-sm text-on-surface-variant dark:text-outline-variant">{formatDate(listing.createdAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
