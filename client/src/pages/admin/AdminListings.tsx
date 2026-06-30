@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
 import { formatUGX, formatDate, CATEGORY_LABELS } from "../../lib/data"
-import { Search, CheckCircle, XCircle, Eye, Package, TrendingUp, Clock, X, Trash2, AlertTriangle, UserX, UserCheck } from "lucide-react"
+import { Search, CheckCircle, XCircle, Eye, Package, TrendingUp, Clock, X, Trash2, UserX, UserCheck } from "lucide-react"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
 
 interface ListingData {
