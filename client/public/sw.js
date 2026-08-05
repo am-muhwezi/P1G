@@ -29,6 +29,9 @@ self.addEventListener("fetch", (event) => {
   const { request } = event
   const url = new URL(request.url)
 
+  // Skip non-http(s) requests (chrome-extension:// etc.) — they cannot be cached
+  if (url.protocol !== "http:" && url.protocol !== "https:") return
+
   // API requests — network-first with cache fallback
   if (url.pathname.startsWith("/api/")) {
     event.respondWith(networkFirst(request))
