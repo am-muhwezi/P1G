@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { api } from "../../lib/api"
 import { formatUGX, formatDate, type Listing, type Category, CATEGORY_LABELS } from "../../lib/data"
-import { Plus, Search, Pencil, Trash2, X, Package, Eye } from "lucide-react"
+import { Plus, Search, Pencil, Trash2, X, Package, Eye, ImagePlus, Loader2 } from "lucide-react"
 import { useToast } from "../../store/toast"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
+import { uploadListingImages, removeListingImage, imagesConfigured } from "../../lib/storage"
 
 const statusColor: Record<string, string> = {
   active: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
@@ -36,7 +37,12 @@ export function SellerListings() {
     stock: 1,
     unit: "pig",
     district: "",
+    images: [] as string[],
   })
+
+  const [uploading, setUploading] = useState(false)
+  const [imageInputKey, setImageInputKey] = useState(0)
+  const sessionUploads = useRef<string[]>([])
 
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -56,7 +62,8 @@ export function SellerListings() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ title: "", description: "", category: "live_pigs", price: 0, stock: 1, unit: "pig", district: "" })
+    setForm({ title: "", description: "", category: "live_pigs", price: 0, stock: 1, unit: "pig", district: "", images: [] })
+    sessionUploads.current = []
     setError("")
     setShowForm(true)
   }
@@ -71,29 +78,64 @@ export function SellerListings() {
       stock: listing.stock,
       unit: listing.unit,
       district: listing.district,
+      images: listing.images?.length ? listing.images : listing.image ? [listing.image] : [],
     })
+    sessionUploads.current = []
     setError("")
     setShowForm(true)
   }
 
+  const handleImageFiles = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setUploading(true)
+    try {
+      const urls = await uploadListingImages(files)
+      sessionUploads.current.push(...urls)
+      setForm((f) => ({ ...f, images: [...f.images, ...urls] }))
+      toast(`${urls.length} image${urls.length === 1 ? "" : "s"} uploaded`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Upload failed"
+      toast(message, "error")
+    } finally {
+      setUploading(false)
+      setImageInputKey((k) => k + 1)
+    }
+  }
+
+  const handleRemoveImage = async (url: string) => {
+    setForm((f) => ({ ...f, images: f.images.filter((u) => u !== url) }))
+    if (sessionUploads.current.includes(url)) {
+      sessionUploads.current = sessionUploads.current.filter((u) => u !== url)
+      try { await removeListingImage(url) } catch { /* orphan file is acceptable */ }
+    }
+  }
   const handleSave = async () => {
     setSaving(true)
     setError("")
     try {
+      const payload = { ...form, image: form.images[0] || "" }
       if (editing) {
-        const updated = await api.put(`/api/seller/listings/${editing.id}`, form)
+        const updated = await api.put(`/api/seller/listings/${editing.id}`, payload)
         setListings((prev) => prev.map((l) => (l.id === editing.id ? updated : l)))
         toast("Listing updated")
       } else {
-        const created = await api.post("/api/seller/listings", form)
+        const created = await api.post("/api/seller/listings", payload)
         setListings((prev) => [created, ...prev])
         toast("Listing created")
       }
+      if (editing) {
+        const removed = (editing.images || []).filter((u) => !form.images.includes(u))
+        for (const url of removed) {
+          try { await removeListingImage(url) } catch { /* orphan file is acceptable */ }
+        }
+      }
       setShowForm(false)
       setEditing(null)
-    } catch (err: any) {
-      setError(err.message)
-      toast(err.message, "error")
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Save failed"
+      setError(message)
+      toast(message, "error")
     } finally {
       setSaving(false)
     }
@@ -249,6 +291,56 @@ export function SellerListings() {
               </Field>
               <Field label="Description">
                 <textarea className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md resize-none h-24 dark:bg-surface-container dark:text-primary-fixed" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </Field>
+              <Field label="Photos">
+                {!imagesConfigured ? (
+                  <p className="p-3 rounded-xl bg-amber-50 text-amber-700 font-label-sm text-label-sm dark:bg-amber-900/20 dark:text-amber-400">
+                    Image upload is not configured yet. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable photos.
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-3 gap-3">
+                      {form.images.map((url) => (
+                        <div key={url} className="relative group rounded-xl overflow-hidden border border-outline-variant/40 dark:border-surface-container">
+                          <img src={url} alt="Listing preview" className="w-full h-24 object-cover" />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveImage(url)}
+                            className="absolute top-1 right-1 p-1 rounded-full bg-black/60 text-white hover:bg-error transition-colors"
+                            aria-label="Remove image"
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                      <label className="relative flex flex-col items-center justify-center h-24 rounded-xl border-2 border-dashed border-outline-variant text-outline hover:border-primary hover:text-primary cursor-pointer transition-colors dark:border-surface-container dark:hover:border-primary-fixed">
+                        {uploading ? (
+                          <>
+                            <Loader2 size={20} className="animate-spin" />
+                            <span className="text-xs mt-1">Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <ImagePlus size={20} />
+                            <span className="text-label-sm font-label-sm mt-1">Add photo</span>
+                          </>
+                        )}
+                        <input
+                          key={imageInputKey}
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          className="hidden"
+                          disabled={uploading}
+                          onChange={handleImageFiles}
+                        />
+                      </label>
+                    </div>
+                    <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">
+                      First photo becomes the cover. Images are compressed and stored in Supabase.
+                    </p>
+                  </div>
+                )}
               </Field>
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Category">

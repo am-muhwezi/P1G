@@ -63,7 +63,12 @@ def create_listing(
         stock=data.stock,
         unit=data.unit,
         district=data.district,
+        images=data.images or [],
     )
+    if data.image:
+        listing.image = data.image
+    elif data.images:
+        listing.image = data.images[0]
     db.add(listing)
     db.commit()
     db.refresh(listing)
@@ -81,6 +86,12 @@ def update_listing(
     patch = data.model_dump(exclude_unset=True)
     for key, val in patch.items():
         setattr(listing, key, val)
+    if "images" in patch:
+        if patch["images"]:
+            if not listing.image:
+                listing.image = patch["images"][0]
+        elif "image" not in patch:
+            listing.image = ""
     db.commit()
     db.refresh(listing)
     return listing

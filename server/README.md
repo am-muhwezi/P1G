@@ -42,6 +42,13 @@ fastapi dev
 |---|---|---|
 | `P1G_WAITLIST_ADMIN_PASSWORD` | Yes | Password for admin dashboard |
 | `ALLOWED_ORIGINS` | Yes | Comma-separated CORS origins |
+| `DATABASE_URL` | No | Postgres DSN (e.g. Supabase). Falls back to SQLite in `data/` |
+
+## Tests
+
+```bash
+uv run pytest tests/
+```
 
 ## Endpoints
 

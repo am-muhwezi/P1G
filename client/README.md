@@ -45,6 +45,16 @@ npm run dev
 | Variable | Default | Description |
 |---|---|---|
 | `VITE_API_URL` | `http://localhost:8000` | Backend API base URL |
+| `VITE_SUPABASE_URL` | — | Supabase project URL (image storage) |
+| `VITE_SUPABASE_ANON_KEY` | — | Supabase anon public key (image storage) |
+
+## Image storage
+
+Listing photos are uploaded directly from the browser to a Supabase Storage bucket named
+`listing-images` (must be public), and the public URLs are stored on the listing. Create the
+bucket in the Supabase dashboard, then set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`
+locally and in the Vercel env vars. Without them, sellers see a notice in the listing form and
+listings fall back to placeholder images.
 
 ## Scripts
 

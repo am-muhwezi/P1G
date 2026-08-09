@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional, Literal
 from datetime import datetime
 
@@ -11,6 +11,8 @@ class ListingCreate(BaseModel):
     stock: int = 1
     unit: str
     district: str = ""
+    image: str = ""
+    images: list[str] = []
 
 
 class ListingUpdate(BaseModel):
@@ -22,6 +24,8 @@ class ListingUpdate(BaseModel):
     unit: Optional[str] = None
     district: Optional[str] = None
     status: Optional[str] = None
+    image: Optional[str] = None
+    images: Optional[list[str]] = None
 
 
 class ListingResponse(BaseModel):
@@ -41,8 +45,14 @@ class ListingResponse(BaseModel):
     rating: float
     reviewCount: int = Field(alias="review_count")
     image: str
+    images: list[str] = []
     createdAt: datetime = Field(alias="created_at")
     updatedAt: datetime = Field(alias="updated_at")
+
+    @field_validator("images", mode="before")
+    @classmethod
+    def normalize_images(cls, v):
+        return v or []
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

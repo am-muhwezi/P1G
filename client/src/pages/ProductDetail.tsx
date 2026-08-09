@@ -9,10 +9,12 @@ export function ProductDetail() {
   const navigate = useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
     if (!id) return
     setLoading(true)
+    setActiveImage(0)
     api.get(`/api/listings/${id}`).then(setListing).catch(() => setListing(null)).finally(() => setLoading(false))
   }, [id])
 
@@ -32,6 +34,13 @@ export function ProductDetail() {
     );
   }
 
+  const galleryImages = listing.images?.length
+    ? listing.images
+    : listing.image
+      ? [listing.image]
+      : []
+  const activeSrc = galleryImages[activeImage] || listing.image || 'https://placehold.co/800x600/e8fff0/0d631b?text=No+Image'
+
   return (
     <div className="max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-stack-lg pb-32">
       <nav className="mb-stack-md">
@@ -49,10 +58,28 @@ export function ProductDetail() {
           <div className="relative h-[400px] md:h-[500px] overflow-hidden rounded-xl shadow-md border border-outline-variant/30">
             <img
               className="w-full h-full object-cover"
-              src={listing.image || 'https://placehold.co/800x600/e8fff0/0d631b?text=No+Image'}
+              src={activeSrc}
               alt={listing.title}
             />
           </div>
+
+          {galleryImages.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-1">
+              {galleryImages.map((src, i) => (
+                <button
+                  key={src}
+                  onClick={() => setActiveImage(i)}
+                  className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
+                    i === activeImage
+                      ? "border-primary dark:border-primary-fixed"
+                      : "border-transparent hover:border-outline-variant"
+                  }`}
+                >
+                  <img className="w-full h-full object-cover" src={src} alt={`${listing.title} ${i + 1}`} />
+                </button>
+              ))}
+            </div>
+          )}
 
           <div className="bg-surface-container-lowest p-stack-md rounded-xl shadow-sm border border-outline-variant/20 dark:bg-surface-dim dark:border-surface-container">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-stack-sm">

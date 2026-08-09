@@ -338,6 +338,7 @@ def listing_detail(
         rating=listing.rating,
         review_count=listing.review_count,
         image=listing.image,
+        images=listing.images or [],
         created_at=listing.created_at,
         updated_at=listing.updated_at,
         sellerStatus=seller.status if seller else "",

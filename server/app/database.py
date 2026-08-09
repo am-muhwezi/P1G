@@ -26,6 +26,23 @@ from app.models.settings import PlatformSettings
 
 def init_db():
     Base.metadata.create_all(bind=engine)
+    _migrate_schema()
+
+
+def _migrate_schema():
+    with engine.begin() as conn:
+        if engine.dialect.name == "sqlite":
+            has_images = conn.exec_driver_sql(
+                "SELECT COUNT(*) FROM pragma_table_info('listings') WHERE name = 'images'"
+            ).scalar()
+            if not has_images:
+                conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN images JSON")
+            conn.exec_driver_sql("UPDATE listings SET images = '[]' WHERE images IS NULL")
+        else:
+            conn.exec_driver_sql(
+                "ALTER TABLE listings ADD COLUMN IF NOT EXISTS images JSON"
+            )
+            conn.exec_driver_sql("UPDATE listings SET images = '[]'::json WHERE images IS NULL")
 
 
 def get_db():

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean
+from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, JSON
 from app.database import Base
 
 
@@ -23,5 +23,6 @@ class Listing(Base):
     review_count = Column(Integer, default=0)
     seller_verified = Column(Boolean, default=False)
     image = Column(String, default="")
+    images = Column(JSON, default=list)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
