@@ -140,7 +140,7 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
         </div>
       )}
 
-      <div className="lg:pl-60 pt-14 lg:pt-0 pb-20">
+      <div className="lg:pl-60 pt-14 lg:pt-0">
         <div className="hidden lg:flex items-center justify-between px-6 py-3 bg-surface-container dark:bg-surface-dim border-b border-outline-variant/20 sticky top-0 z-10">
           <div className="relative w-80">
             <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-outline-variant dark:text-outline" />
@@ -173,32 +173,6 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
           {children || <Outlet />}
         </div>
       </div>
-
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-20 px-2 pb-2 bg-surface-container dark:bg-surface-dim shadow-[0_-2px_12px_rgba(0,0,0,0.08)] rounded-t-2xl">
-        {BUYER_NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/buyer"}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-colors min-w-0 ${
-                isActive
-                  ? "text-primary dark:text-primary-fixed"
-                  : "text-on-surface-variant dark:text-outline-variant"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`p-1.5 rounded-lg transition-colors ${isActive ? "bg-primary-container/40 dark:bg-primary-fixed/20" : ""}`}>
-                  {item.icon}
-                </div>
-                <span className="font-label-sm text-label-sm text-center">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
     </div>
   )
 }

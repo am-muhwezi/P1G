@@ -18,8 +18,6 @@ const SELLER_NAV: NavItem[] = [
   { to: "/seller/settings", label: "Settings", icon: <Settings size={20} /> },
 ]
 
-const BOTTOM_NAV: NavItem[] = SELLER_NAV.slice(0, 5)
-
 export function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const auth = useAuth()
@@ -146,37 +144,11 @@ export function AppShell() {
         </div>
       )}
 
-      <div className="lg:pl-60 pt-14 lg:pt-0 pb-20 lg:pb-0">
+      <div className="lg:pl-60 pt-14 lg:pt-0">
         <div className="p-4 lg:p-6 max-w-container-max mx-auto">
           <Outlet />
         </div>
       </div>
-
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-20 px-2 pb-2 bg-[#002114] shadow-[0_-2px_12px_rgba(0,0,0,0.08)] rounded-t-2xl">
-        {BOTTOM_NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.to === "/seller"}
-            className={({ isActive }) =>
-              `flex flex-col items-center justify-center gap-0.5 px-3 py-2 rounded-xl transition-colors min-w-0 ${
-                isActive
-                  ? "text-white"
-                  : "text-white/60"
-              }`
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <div className={`p-1.5 rounded-lg transition-colors ${isActive ? "bg-white/10" : ""}`}>
-                  {item.icon}
-                </div>
-                <span className="font-label-sm text-label-sm text-center truncate w-full">{item.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
-      </nav>
     </div>
   )
 }

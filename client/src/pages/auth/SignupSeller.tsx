@@ -40,7 +40,7 @@ export function SignupSeller() {
         throw new Error(msg)
       }
       const data = await res.json()
-      login(data.role, data.id, data.name, data.token, data.email)
+      login(data)
       navigate("/seller", { replace: true })
     } catch (err: any) {
       setError(err.message)

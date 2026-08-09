@@ -52,7 +52,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
         if (!res.ok) { setReady(true); return }
         const data = await res.json()
         if (data.status === "suspended") {
-          login(data.role, data.id, data.name, data.token, data.email, data.status)
+          login(data)
         }
       } catch { /* ignore */ }
       setReady(true)

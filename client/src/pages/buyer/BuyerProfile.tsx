@@ -2,17 +2,22 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../../store/auth"
 import { useTheme } from "../../context/ThemeContext"
 import { useNavigate } from "react-router-dom"
-import { Sun, Moon, Bell, Shield, LogOut, Mail, MapPin, Calendar, Smartphone } from "lucide-react"
+import { Sun, Moon, Shield, LogOut, Mail, MapPin, Calendar } from "lucide-react"
 import { api } from "../../lib/api"
 import { formatUGX, type Order } from "../../lib/data"
+
+function formatMemberSince(iso: string | null): string | null {
+  if (!iso) return null
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return null
+  return d.toLocaleDateString("en-UG", { year: "numeric", month: "short" })
+}
 
 export function BuyerProfile() {
   const auth = useAuth()
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[]>([])
-  const [orderNotify, setOrderNotify] = useState(true)
-  const [promoNotify, setPromoNotify] = useState(false)
 
   useEffect(() => {
     api.get("/api/orders").then(setOrders).catch(() => {})
@@ -20,11 +25,7 @@ export function BuyerProfile() {
 
   const totalSpent = orders.reduce((s, o) => s + o.total, 0)
   const deliveredCount = orders.filter((o) => o.status === "delivered").length
-
-  const toggleClass = (on: boolean) =>
-    `relative w-12 h-6 rounded-full transition-colors ${on ? "bg-primary dark:bg-primary-fixed" : "bg-outline-variant dark:bg-surface-container-highest"}`
-  const dotClass = (on: boolean) =>
-    `absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${on ? "translate-x-6" : "translate-x-0.5"}`
+  const memberSince = formatMemberSince(auth.createdAt)
 
   return (
     <div className="p-4">
@@ -65,14 +66,18 @@ export function BuyerProfile() {
               <Mail size={18} className="text-on-surface-variant dark:text-outline-variant" />
               <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">{auth.email || "N/A"}</span>
             </div>
-            <div className="flex items-center gap-3">
-              <MapPin size={18} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Kampala, Uganda</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <Calendar size={18} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Member</span>
-            </div>
+            {auth.district && (
+              <div className="flex items-center gap-3">
+                <MapPin size={18} className="text-on-surface-variant dark:text-outline-variant" />
+                <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">{auth.district}, Uganda</span>
+              </div>
+            )}
+            {memberSince && (
+              <div className="flex items-center gap-3">
+                <Calendar size={18} className="text-on-surface-variant dark:text-outline-variant" />
+                <span className="font-body-md text-body-md text-on-surface dark:text-primary-fixed">Member since {memberSince}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -89,24 +94,6 @@ export function BuyerProfile() {
               className={`relative w-12 h-6 rounded-full transition-colors ${theme === "dark" ? "bg-primary" : "bg-outline-variant"}`}
             >
               <div className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow-sm transition-transform ${theme === "dark" ? "translate-x-6" : "translate-x-0.5"}`} />
-            </button>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              <Bell size={20} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">Order Updates</span>
-            </div>
-            <button onClick={() => setOrderNotify(!orderNotify)} className={toggleClass(orderNotify)}>
-              <div className={dotClass(orderNotify)} />
-            </button>
-          </div>
-          <div className="flex items-center justify-between py-2">
-            <div className="flex items-center gap-3">
-              <Smartphone size={20} className="text-on-surface-variant dark:text-outline-variant" />
-              <span className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">Promotions</span>
-            </div>
-            <button onClick={() => setPromoNotify(!promoNotify)} className={toggleClass(promoNotify)}>
-              <div className={dotClass(promoNotify)} />
             </button>
           </div>
           <div className="flex items-center gap-3 py-2">

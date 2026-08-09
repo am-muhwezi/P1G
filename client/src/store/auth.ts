@@ -2,6 +2,17 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 import type { Role } from "../lib/data"
 
+interface AuthUser {
+  role: Role
+  id: string
+  name: string
+  token: string
+  email: string
+  status?: string
+  district?: string | null
+  created_at?: string
+}
+
 interface AuthState {
   isAuthenticated: boolean
   role: Role | null
@@ -10,7 +21,9 @@ interface AuthState {
   email: string | null
   token: string | null
   status: string | null
-  login: (role: Role, userId: string, name: string, token: string, email: string, status?: string) => void
+  district: string | null
+  createdAt: string | null
+  login: (user: AuthUser) => void
   logout: () => void
 }
 
@@ -24,8 +37,20 @@ export const useAuth = create<AuthState>()(
       email: null,
       token: null,
       status: null,
-      login: (role, userId, name, token, email, status = "active") =>
-        set({ isAuthenticated: true, role, userId, name, token, email, status }),
+      district: null,
+      createdAt: null,
+      login: (user) =>
+        set({
+          isAuthenticated: true,
+          role: user.role,
+          userId: user.id,
+          name: user.name,
+          token: user.token,
+          email: user.email,
+          status: user.status ?? "active",
+          district: user.district ?? null,
+          createdAt: user.created_at ?? null,
+        }),
       logout: () =>
         set({
           isAuthenticated: false,
@@ -35,6 +60,8 @@ export const useAuth = create<AuthState>()(
           email: null,
           token: null,
           status: null,
+          district: null,
+          createdAt: null,
         }),
     }),
     { name: "p1g-auth" },

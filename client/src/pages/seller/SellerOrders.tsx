@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
 import { formatUGX, formatDate, type Order } from "../../lib/data"
-import { Search, ChevronDown, ChevronUp, MessageSquare, CheckCheck, X, ShoppingCart, Clock, CheckCircle, DollarSign } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, ShoppingCart, Clock, CheckCircle, DollarSign } from "lucide-react"
 
 const statusColor: Record<string, string> = {
   pending: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20",
@@ -80,73 +80,10 @@ function OrderRow({ order }: { order: Order }) {
   )
 }
 
-interface Thread {
-  id: string
-  buyerId: string
-  buyerName: string
-  subject: string
-  preview: string
-  timestamp: string
-  unread: boolean
-  messages: { from: "buyer" | "seller"; text: string; time: string }[]
-}
-
-const MOCK_THREADS: Thread[] = [
-  {
-    id: "msg-1",
-    buyerId: "buyer-1",
-    buyerName: "John Buyer",
-    subject: "Large White Boar - 80kg",
-    preview: "Is the boar still available? I'd like to come see it this weekend.",
-    timestamp: "2025-06-23T09:15:00Z",
-    unread: true,
-    messages: [
-      { from: "buyer", text: "Hi, I'm interested in the Large White Boar. Is it still available?", time: "9:15 AM" },
-      { from: "buyer", text: "I'd like to come see it this weekend if possible.", time: "9:15 AM" },
-    ],
-  },
-  {
-    id: "msg-2",
-    buyerId: "buyer-1",
-    buyerName: "John Buyer",
-    subject: "Duroc Piglets - Set of 5",
-    preview: "Great, I'll take the set. Can you deliver to Kampala?",
-    timestamp: "2025-06-22T14:30:00Z",
-    unread: false,
-    messages: [
-      { from: "buyer", text: "Are the Duroc piglets still for sale?", time: "2:00 PM" },
-      { from: "seller", text: "Yes, still available! I have 3 sets left.", time: "2:15 PM" },
-      { from: "buyer", text: "Great, I'll take the set. Can you deliver to Kampala?", time: "2:30 PM" },
-      { from: "seller", text: "Yes, delivery to Kampala is UGX 30,000. I can arrange for Friday.", time: "2:45 PM" },
-      { from: "buyer", text: "Perfect, let's proceed. Sending payment now.", time: "3:00 PM" },
-    ],
-  },
-  {
-    id: "msg-3",
-    buyerId: "buyer-1",
-    buyerName: "John Buyer",
-    subject: "Premium Landrace Sow",
-    preview: "Payment sent! Please confirm receipt.",
-    timestamp: "2025-06-21T11:00:00Z",
-    unread: false,
-    messages: [
-      { from: "buyer", text: "I'd like to buy the Landrace Sow. Price is UGX 1,450,000?", time: "10:00 AM" },
-      { from: "seller", text: "That's correct. She's a proven breeder with excellent lineage.", time: "10:15 AM" },
-      { from: "seller", text: "I can do UGX 1,400,000 if you arrange transport.", time: "10:20 AM" },
-      { from: "buyer", text: "Deal! I'll arrange pickup on Monday. Sending payment now.", time: "10:45 AM" },
-      { from: "buyer", text: "Payment sent! Please confirm receipt.", time: "11:00 AM" },
-    ],
-  },
-]
-
-const tabs = ["Orders", "Messages"] as const
-type Tab = (typeof tabs)[number]
-
 export function SellerOrders() {
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
-  const [activeTab, setActiveTab] = useState<Tab>("Orders")
 
   useEffect(() => {
     api.get("/api/seller/orders")
@@ -164,7 +101,7 @@ export function SellerOrders() {
       <div className="mb-6">
         <h1 className="font-headline-lg text-headline-lg text-on-surface dark:text-primary-fixed">Orders</h1>
         <p className="text-on-surface-variant font-body-md text-body-md dark:text-outline-variant">
-          Manage orders and messages from buyers
+          Manage orders from buyers
         </p>
       </div>
 
@@ -199,31 +136,11 @@ export function SellerOrders() {
         </div>
       </div>
 
-      <div className="flex gap-1 mb-6 p-1 bg-surface-container rounded-xl w-fit dark:bg-surface-dim">
-        {tabs.map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className={`px-5 py-2 rounded-lg font-label-sm text-label-sm transition-colors ${
-              activeTab === tab
-                ? "bg-white text-on-surface shadow-sm dark:bg-surface-container-lowest dark:text-primary-fixed"
-                : "text-on-surface-variant hover:text-on-surface dark:text-outline-variant dark:hover:text-primary-fixed"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
-      </div>
-
-      {activeTab === "Orders" ? (
-        <OrdersPanel search={search} setSearch={setSearch} filtered={orders.filter(
-          (o) =>
-            o.id.toLowerCase().includes(search.toLowerCase()) ||
-            o.buyerName.toLowerCase().includes(search.toLowerCase()),
-        )} loading={loading} />
-      ) : (
-        <MessagesPanel />
-      )}
+      <OrdersPanel search={search} setSearch={setSearch} filtered={orders.filter(
+        (o) =>
+          o.id.toLowerCase().includes(search.toLowerCase()) ||
+          o.buyerName.toLowerCase().includes(search.toLowerCase()),
+      )} loading={loading} />
     </div>
   )
 }
@@ -270,150 +187,6 @@ function OrdersPanel({ search, setSearch, filtered, loading }: { search: string;
           </table>
         </div>
       )}
-    </>
-  )
-}
-
-function MessagesPanel() {
-  const [search, setSearch] = useState("")
-  const [activeThread, setActiveThread] = useState<string | null>(null)
-
-  const threads = MOCK_THREADS.filter(
-    (t) =>
-      t.buyerName.toLowerCase().includes(search.toLowerCase()) ||
-      t.subject.toLowerCase().includes(search.toLowerCase()),
-  )
-
-  const active = threads.find((t) => t.id === activeThread)
-
-  return (
-    <>
-      <div className="relative mb-4 lg:hidden">
-        <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-outline dark:text-outline-variant" />
-        <input
-          className="w-full pl-11 pr-4 py-3 bg-warm-beige border-none rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed dark:placeholder:text-outline"
-          placeholder="Search messages..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className={`bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container lg:col-span-1 ${activeThread ? "hidden lg:block" : ""}`}>
-          <div className="hidden lg:block p-4 border-b border-outline-variant/20 dark:border-surface-container">
-            <Search size={18} className="absolute left-6 mt-3 text-outline dark:text-outline-variant" />
-            <input
-              className="w-full pl-8 pr-4 py-2 bg-warm-beige border-none rounded-lg focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed dark:placeholder:text-outline"
-              placeholder="Search messages..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <div className="divide-y divide-outline-variant/20 dark:divide-surface-container max-h-[500px] overflow-y-auto">
-            {threads.length === 0 ? (
-              <div className="p-8 text-center">
-                <div className="w-12 h-12 rounded-full bg-primary-container/30 flex items-center justify-center text-primary mx-auto mb-3 dark:bg-primary-fixed/20 dark:text-primary-fixed">
-                  <MessageSquare size={24} />
-                </div>
-                <p className="text-on-surface-variant font-body-md dark:text-outline-variant">No messages found.</p>
-              </div>
-            ) : (
-              threads.map((thread) => (
-                <button
-                  key={thread.id}
-                  onClick={() => setActiveThread(thread.id)}
-                  className={`w-full text-left p-4 transition-colors hover:bg-surface-container/50 dark:hover:bg-surface-container ${
-                    activeThread === thread.id ? "bg-surface-container/70 dark:bg-surface-container" : ""
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 ${
-                      thread.unread ? "bg-primary dark:bg-primary-fixed" : "bg-outline-variant dark:bg-surface-container-highest"
-                    }`}>
-                      {thread.buyerName.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-0.5">
-                        <span className={`font-label-lg text-label-lg truncate ${thread.unread ? "text-on-surface font-semibold dark:text-primary-fixed" : "text-on-surface dark:text-primary-fixed"}`}>
-                          {thread.buyerName}
-                        </span>
-                        <span className="text-label-sm text-on-surface-variant dark:text-outline-variant shrink-0 ml-2">
-                          {new Date(thread.timestamp).toLocaleDateString("en-UG", { month: "short", day: "numeric" })}
-                        </span>
-                      </div>
-                      <p className="text-label-sm text-on-surface-variant dark:text-outline-variant truncate">{thread.subject}</p>
-                      <p className="text-label-sm text-on-surface-variant/70 dark:text-outline-variant/70 truncate mt-0.5">{thread.preview}</p>
-                    </div>
-                    {thread.unread && (
-                      <div className="w-2 h-2 rounded-full bg-primary dark:bg-primary-fixed shrink-0 mt-2" />
-                    )}
-                  </div>
-                </button>
-              ))
-            )}
-          </div>
-        </div>
-
-        <div className={`bg-surface-container-lowest rounded-xl shadow-sm border border-surface-container-high dark:bg-surface-dim dark:border-surface-container flex flex-col lg:col-span-2 ${!activeThread ? "hidden lg:flex" : ""}`}>
-          {active ? (
-            <>
-              <div className="flex items-center gap-3 p-4 border-b border-outline-variant/20 dark:border-surface-container">
-                <button onClick={() => setActiveThread(null)} className="lg:hidden text-on-surface-variant dark:text-outline-variant">
-                  <X size={20} />
-                </button>
-                <div className="w-10 h-10 rounded-full bg-outline-variant dark:bg-surface-container-highest flex items-center justify-center text-white font-bold text-sm">
-                  {active.buyerName.charAt(0)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{active.buyerName}</p>
-                  <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">{active.subject}</p>
-                </div>
-              </div>
-              <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[400px]">
-                {active.messages.map((msg, idx) => (
-                  <div key={idx} className={`flex ${msg.from === "seller" ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[80%] p-3 rounded-xl ${
-                      msg.from === "seller"
-                        ? "bg-[#002114] text-white rounded-br-none"
-                        : "bg-surface-container dark:bg-surface-container dark:text-primary-fixed rounded-bl-none"
-                    }`}>
-                      <p className="font-body-md text-body-md">{msg.text}</p>
-                      <div className={`flex items-center justify-end gap-1 mt-1 ${
-                        msg.from === "seller" ? "text-white/60" : "text-on-surface-variant dark:text-outline-variant"
-                      }`}>
-                        <span className="text-[10px]">{msg.time}</span>
-                        {msg.from === "seller" && <CheckCheck size={12} />}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              <div className="p-4 border-t border-outline-variant/20 dark:border-surface-container">
-                <div className="flex gap-2">
-                  <input
-                    className="flex-1 px-4 py-3 bg-warm-beige border-none rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-dim dark:text-primary-fixed dark:placeholder:text-outline"
-                    placeholder="Type a message..."
-                    readOnly
-                  />
-                  <button className="px-4 py-3 bg-[#002114] text-white rounded-xl font-label-lg hover:bg-[#002114]/90 transition-colors">
-                    Send
-                  </button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-              <div className="w-16 h-16 rounded-full bg-primary-container/30 flex items-center justify-center text-primary mb-4 dark:bg-primary-fixed/20 dark:text-primary-fixed">
-                <MessageSquare size={32} />
-              </div>
-              <h2 className="font-headline-md text-headline-md text-on-surface mb-2 dark:text-primary-fixed">Select a Conversation</h2>
-              <p className="text-on-surface-variant font-body-md text-body-md max-w-sm dark:text-outline-variant">
-                Choose a thread from the left to view messages.
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
     </>
   )
 }

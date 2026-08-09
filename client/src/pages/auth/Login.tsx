@@ -30,7 +30,7 @@ export function Login() {
         throw new Error(msg)
       }
       const data = await res.json()
-      login(data.role, data.id, data.name, data.token, data.email, data.status)
+      login(data)
       if (data.status === "suspended") {
         navigate("/suspended", { replace: true })
         return
