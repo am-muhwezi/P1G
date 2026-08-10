@@ -295,7 +295,6 @@ export function SellerListings() {
               <Field label="Photos">
                 {!imagesConfigured ? (
                   <p className="p-3 rounded-xl bg-amber-50 text-amber-700 font-label-sm text-label-sm dark:bg-amber-900/20 dark:text-amber-400">
-                    Image upload is not configured yet. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to enable photos.
                   </p>
                 ) : (
                   <div className="space-y-3">
@@ -337,7 +336,7 @@ export function SellerListings() {
                       </label>
                     </div>
                     <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">
-                      First photo becomes the cover. Images are compressed and stored in Supabase.
+                      You can upload multiple images. The first image will be used as the main listing image.
                     </p>
                   </div>
                 )}
