@@ -91,6 +91,32 @@ export interface Order {
   updatedAt: string
 }
 
+export interface Message {
+  id: string
+  senderId: string
+  senderRole: Role
+  body: string
+  createdAt: string
+}
+
+export interface Conversation {
+  id: string
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  sellerName: string
+  listingId?: string
+  listingTitle?: string
+  lastMessage: string
+  lastMessageAt: string
+  unreadCount: number
+  createdAt: string
+}
+
+export interface ConversationDetail extends Conversation {
+  messages: Message[]
+}
+
 export interface CategoryDisplay {
   id: string
   name: string

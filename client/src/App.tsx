@@ -24,6 +24,9 @@ import { BuyerHome } from './pages/buyer/BuyerHome';
 import { BuyerOrders } from './pages/buyer/BuyerOrders';
 import { BuyerProfile } from './pages/buyer/BuyerProfile';
 import { Cart } from './pages/buyer/Cart';
+import { Messages } from './pages/Messages';
+import { MessageThread } from './pages/MessageThread';
+import { useMessages } from './store/messages';
 
 import { AdminDashboard } from './pages/admin/AdminDashboard';
 import { AdminAnalytics } from './pages/admin/AdminAnalytics';
@@ -65,6 +68,14 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const isAuthenticated = useAuth((s) => s.isAuthenticated)
+
+  useEffect(() => {
+    if (!isAuthenticated) return
+    useMessages.getState().connect()
+    return () => useMessages.getState().disconnect()
+  }, [isAuthenticated])
+
   useEffect(() => {
     const onOnline = () => {
       useNetwork.getState().setOnline(true)
@@ -106,7 +117,8 @@ export default function App() {
               <Route path="/seller" element={<SellerDashboard />} />
               <Route path="/seller/listings" element={<SellerListings />} />
               <Route path="/seller/orders" element={<SellerOrders />} />
-
+              <Route path="/seller/messages" element={<Messages />} />
+              <Route path="/seller/messages/:conversationId" element={<MessageThread />} />
               <Route path="/seller/analytics" element={<SellerAnalytics />} />
               <Route path="/seller/settings" element={<SellerSettings />} />
             </Route>
@@ -126,6 +138,8 @@ export default function App() {
             <Route element={<BuyerLayout />}>
               <Route path="/buyer" element={<BuyerHome />} />
               <Route path="/buyer/orders" element={<BuyerOrders />} />
+              <Route path="/buyer/messages" element={<Messages />} />
+              <Route path="/buyer/messages/:conversationId" element={<MessageThread />} />
               <Route path="/buyer/profile" element={<BuyerProfile />} />
               <Route path="/buyer/cart" element={<Cart />} />
             </Route>

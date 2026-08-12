@@ -3,17 +3,21 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { formatUGX, formatDate, type Listing } from '../lib/data';
 import { Button } from '../components/ui/Button';
+import { MessageSellerModal } from '../components/features/MessageSellerModal';
 import { useCart } from '../store/cart';
 import { useToast } from '../store/toast';
+import { useAuth } from '../store/auth';
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const addItem = useCart((s) => s.addItem);
   const toast = useToast((s) => s.toast);
+  const auth = useAuth();
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [showMessageModal, setShowMessageModal] = useState(false);
 
   useEffect(() => {
     if (!id) return
@@ -188,7 +192,22 @@ export function ProductDetail() {
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
                 Buy Now
               </Button>
-              <Button variant="secondary" className="w-full">
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => {
+                  if (!auth.isAuthenticated) {
+                    toast("Please log in to message the seller", "error")
+                    navigate("/login")
+                    return
+                  }
+                  if (auth.role !== "buyer") {
+                    toast("Only buyer accounts can message sellers", "error")
+                    return
+                  }
+                  setShowMessageModal(true)
+                }}
+              >
                 <span className="material-symbols-outlined">chat_bubble</span>
                 Message Seller
               </Button>
@@ -206,6 +225,26 @@ export function ProductDetail() {
           </div>
         </div>
       </div>
+
+      <MessageSellerModal
+        open={showMessageModal}
+        sellerName={listing.sellerName}
+        listingTitle={listing.title}
+        onClose={() => setShowMessageModal(false)}
+        onSend={async (body) => {
+          try {
+            const conversation = await api.post("/api/messages/start", {
+              seller_id: listing.sellerId,
+              listing_id: listing.id,
+              body,
+            })
+            setShowMessageModal(false)
+            navigate(`/buyer/messages/${conversation.id}`)
+          } catch (err) {
+            toast(err instanceof Error ? err.message : "Failed to send message", "error")
+          }
+        }}
+      />
     </div>
   );
 }

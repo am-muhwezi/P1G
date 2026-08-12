@@ -2,12 +2,14 @@ import { useState } from "react"
 import { NavLink, Outlet, useNavigate } from "react-router-dom"
 import { useTheme } from "../../context/ThemeContext"
 import { useAuth } from "../../store/auth"
-import { Home, ShoppingBag, User, ShoppingCart, Sun, Moon, LogOut, Menu, Bell, Search } from "lucide-react"
+import { useMessages } from "../../store/messages"
+import { Home, ShoppingBag, User, ShoppingCart, Sun, Moon, LogOut, Menu, Bell, Search, MessageCircle } from "lucide-react"
 import { useCart } from "../../store/cart"
 
 const BUYER_NAV = [
   { to: "/buyer", label: "Home", icon: <Home size={20} /> },
   { to: "/buyer/orders", label: "Orders", icon: <ShoppingBag size={20} /> },
+  { to: "/buyer/messages", label: "Messages", icon: <MessageCircle size={20} /> },
   { to: "/buyer/cart", label: "Cart", icon: <ShoppingCart size={20} /> },
   { to: "/buyer/profile", label: "Profile", icon: <User size={20} /> },
 ]
@@ -17,6 +19,7 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const auth = useAuth()
+  const unreadCount = useMessages((s) => s.unreadCount)
   const cartItems = useCart((s) => s.items)
   const totalQty = cartItems.reduce((s, i) => s + i.quantity, 0)
 
@@ -45,6 +48,11 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
             >
               {item.icon}
               {item.label}
+              {item.to === "/buyer/messages" && unreadCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold dark:bg-primary-fixed dark:text-on-primary-fixed">
+                  {unreadCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -124,6 +132,11 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
                 >
                   {item.icon}
                   {item.label}
+                  {item.to === "/buyer/messages" && unreadCount > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold dark:bg-primary-fixed dark:text-on-primary-fixed">
+                      {unreadCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>
@@ -161,8 +174,13 @@ export function BuyerLayout({ children }: { children?: React.ReactNode }) {
             <button onClick={toggleTheme} className="text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-primary-fixed transition-colors">
               {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            <button className="text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-primary-fixed transition-colors">
+            <button onClick={() => navigate("/buyer/messages")} className="relative text-on-surface-variant dark:text-outline-variant hover:text-on-surface dark:hover:text-primary-fixed transition-colors">
               <Bell size={20} />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 bg-primary text-on-primary text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center dark:bg-primary-fixed dark:text-on-primary-fixed">
+                  {unreadCount}
+                </span>
+              )}
             </button>
             <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-sm text-on-primary font-semibold dark:bg-primary-fixed dark:text-on-primary-fixed">
               {auth.name?.[0]?.toUpperCase() || "U"}

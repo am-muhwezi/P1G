@@ -1,8 +1,9 @@
 import { useState } from "react"
 import { NavLink, useNavigate, Outlet } from "react-router-dom"
 import { useAuth } from "../../store/auth"
+import { useMessages } from "../../store/messages"
 import { useTheme } from "../../context/ThemeContext"
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, LogOut, Sun, Moon, Menu, Store } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, LogOut, Sun, Moon, Menu, Store, MessageCircle } from "lucide-react"
 
 interface NavItem {
   to: string
@@ -13,6 +14,7 @@ interface NavItem {
 const SELLER_NAV: NavItem[] = [
   { to: "/seller", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
   { to: "/seller/listings", label: "My Listings", icon: <Package size={20} /> },
+  { to: "/seller/messages", label: "Messages", icon: <MessageCircle size={20} /> },
   { to: "/seller/orders", label: "Orders", icon: <ShoppingCart size={20} /> },
   { to: "/seller/analytics", label: "Analytics", icon: <BarChart3 size={20} /> },
   { to: "/seller/settings", label: "Settings", icon: <Settings size={20} /> },
@@ -22,6 +24,7 @@ const SELLER_NAV: NavItem[] = [
 export function AppShell() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const auth = useAuth()
+  const unreadCount = useMessages((s) => s.unreadCount)
   const { theme, toggleTheme } = useTheme()
   const navigate = useNavigate()
 
@@ -52,6 +55,11 @@ export function AppShell() {
             >
               {item.icon}
               {item.label}
+              {item.to === "/seller/messages" && unreadCount > 0 && (
+                <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold dark:bg-primary-fixed dark:text-on-primary-fixed">
+                  {unreadCount}
+                </span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -129,6 +137,11 @@ export function AppShell() {
                 >
                   {item.icon}
                   {item.label}
+                  {item.to === "/seller/messages" && unreadCount > 0 && (
+                    <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-primary text-on-primary text-[11px] font-bold dark:bg-primary-fixed dark:text-on-primary-fixed">
+                      {unreadCount}
+                    </span>
+                  )}
                 </NavLink>
               ))}
             </nav>
