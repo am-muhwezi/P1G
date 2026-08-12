@@ -20,6 +20,7 @@ class Base(DeclarativeBase):
 
 from app.models.user import User
 from app.models.listing import Listing
+from app.models.listing_view import ListingView
 from app.models.order import Order, OrderItem
 from app.models.settings import PlatformSettings
 

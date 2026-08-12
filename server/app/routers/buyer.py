@@ -1,16 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+import hashlib
+from datetime import datetime, timedelta, timezone
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import desc
+from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
 from app.models.user import User
 from app.models.listing import Listing
+from app.models.listing_view import ListingView
 from app.models.order import Order, OrderItem
 from app.routers.auth import get_current_user
 from app.schemas.seller import ListingResponse, OrderResponse
 from app.schemas.buyer import OrderCreate
 
 router = APIRouter(prefix="/api", tags=["buyer"])
+
+VIEW_DEDUP_WINDOW = timedelta(minutes=30)
+
+
+def _viewer_key(request: Request) -> str:
+    forwarded = request.headers.get("x-forwarded-for")
+    ip = forwarded.split(",")[0].strip() if forwarded else (request.client.host if request.client else "unknown")
+    return hashlib.sha256(ip.encode()).hexdigest()
 
 
 @router.get("/listings", response_model=list[ListingResponse])
@@ -39,12 +51,41 @@ def list_listings(
     return q.all()
 
 
+@router.get("/listings/by-ids", response_model=list[ListingResponse])
+def get_listings_by_ids(ids: str = "", db: Session = Depends(get_db)):
+    id_list = [i for i in ids.split(",") if i]
+    if not id_list:
+        return []
+    return db.query(Listing).filter(Listing.id.in_(id_list)).all()
+
+
 @router.get("/listings/{listing_id}", response_model=ListingResponse)
-def get_listing(listing_id: str, db: Session = Depends(get_db)):
+def get_listing(listing_id: str, request: Request, db: Session = Depends(get_db)):
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
-    listing.views += 1
+
+    viewer_key = _viewer_key(request)
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
+    should_count = False
+    try:
+        db.add(ListingView(listing_id=listing_id, viewer_key=viewer_key, last_viewed_at=now))
+        db.flush()
+        should_count = True
+    except IntegrityError:
+        db.rollback()
+        existing = (
+            db.query(ListingView)
+            .filter(ListingView.listing_id == listing_id, ListingView.viewer_key == viewer_key)
+            .first()
+        )
+        if existing and now - existing.last_viewed_at > VIEW_DEDUP_WINDOW:
+            existing.last_viewed_at = now
+            should_count = True
+
+    if should_count:
+        db.query(Listing).filter(Listing.id == listing_id).update({"views": Listing.views + 1})
+
     db.commit()
     db.refresh(listing)
     return listing
