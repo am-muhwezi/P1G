@@ -108,6 +108,38 @@ export function ProductDetail() {
               )}
             </div>
           </div>
+
+          {(listing.sex || listing.breed || listing.ageMonths || listing.ageWeeks) && (
+            <div className="bg-surface-container-lowest p-stack-md rounded-xl shadow-sm border border-outline-variant/20 dark:bg-surface-dim dark:border-surface-container">
+              <h2 className="font-headline-sm text-headline-sm text-on-surface dark:text-primary-fixed mb-stack-sm">Specifications</h2>
+              <div className="grid grid-cols-2 gap-3">
+                {listing.breed && (
+                  <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                    <span className="text-on-surface-variant dark:text-outline-variant font-label-sm text-label-sm">Breed</span>
+                    <span className="text-on-surface dark:text-primary-fixed font-label-sm text-label-sm">{listing.breed}</span>
+                  </div>
+                )}
+                {listing.sex && (
+                  <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                    <span className="text-on-surface-variant dark:text-outline-variant font-label-sm text-label-sm">Sex</span>
+                    <span className="text-on-surface dark:text-primary-fixed font-label-sm text-label-sm">{listing.sex}</span>
+                  </div>
+                )}
+                {(listing.ageMonths ?? 0) > 0 && (
+                  <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                    <span className="text-on-surface-variant dark:text-outline-variant font-label-sm text-label-sm">Age</span>
+                    <span className="text-on-surface dark:text-primary-fixed font-label-sm text-label-sm">{listing.ageMonths} month{listing.ageMonths === 1 ? "" : "s"}</span>
+                  </div>
+                )}
+                {(listing.ageWeeks ?? 0) > 0 && (
+                  <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                    <span className="text-on-surface-variant dark:text-outline-variant font-label-sm text-label-sm">Age</span>
+                    <span className="text-on-surface dark:text-primary-fixed font-label-sm text-label-sm">{listing.ageWeeks} week{listing.ageWeeks === 1 ? "" : "s"}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="lg:col-span-5 space-y-stack-md">

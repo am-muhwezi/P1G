@@ -10,9 +10,14 @@ class ListingCreate(BaseModel):
     price: int
     stock: int = 1
     unit: str
-    district: str = ""
+    sex: Optional[str] = None
+    breed: Optional[str] = None
+    age_months: Optional[int] = Field(default=None, alias="ageMonths")
+    age_weeks: Optional[int] = Field(default=None, alias="ageWeeks")
     image: str = ""
     images: list[str] = []
+
+    model_config = {"populate_by_name": True}
 
 
 class ListingUpdate(BaseModel):
@@ -22,17 +27,22 @@ class ListingUpdate(BaseModel):
     price: Optional[int] = None
     stock: Optional[int] = None
     unit: Optional[str] = None
-    district: Optional[str] = None
+    sex: Optional[str] = None
+    breed: Optional[str] = None
+    age_months: Optional[int] = Field(default=None, alias="ageMonths")
+    age_weeks: Optional[int] = Field(default=None, alias="ageWeeks")
     status: Optional[str] = None
     image: Optional[str] = None
     images: Optional[list[str]] = None
 
+    model_config = {"populate_by_name": True}
+
 
 class ListingResponse(BaseModel):
     id: str
-    sellerId: str = Field(alias="seller_id")
-    sellerName: str = Field(alias="seller_name")
-    sellerVerified: bool = Field(alias="seller_verified")
+    sellerId: str = Field(validation_alias="seller_id")
+    sellerName: str = Field(validation_alias="seller_name")
+    sellerVerified: bool = Field(validation_alias="seller_verified")
     title: str
     description: str
     category: str
@@ -40,14 +50,18 @@ class ListingResponse(BaseModel):
     stock: int
     unit: str
     district: str
+    sex: Optional[str] = None
+    breed: Optional[str] = None
+    ageMonths: Optional[int] = Field(default=None, validation_alias="age_months")
+    ageWeeks: Optional[int] = Field(default=None, validation_alias="age_weeks")
     status: str
     views: int
     rating: float
-    reviewCount: int = Field(alias="review_count")
+    reviewCount: int = Field(validation_alias="review_count")
     image: str
     images: list[str] = []
-    createdAt: datetime = Field(alias="created_at")
-    updatedAt: datetime = Field(alias="updated_at")
+    createdAt: datetime = Field(validation_alias="created_at")
+    updatedAt: datetime = Field(validation_alias="updated_at")
 
     @field_validator("images", mode="before")
     @classmethod

@@ -39,11 +39,22 @@ def _migrate_schema():
             if not has_images:
                 conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN images JSON")
             conn.exec_driver_sql("UPDATE listings SET images = '[]' WHERE images IS NULL")
+
+            for column, coltype in [("sex", "VARCHAR"), ("breed", "VARCHAR"), ("age_months", "INTEGER"), ("age_weeks", "INTEGER")]:
+                has_column = conn.exec_driver_sql(
+                    f"SELECT COUNT(*) FROM pragma_table_info('listings') WHERE name = '{column}'"
+                ).scalar()
+                if not has_column:
+                    conn.exec_driver_sql(f"ALTER TABLE listings ADD COLUMN {column} {coltype}")
         else:
             conn.exec_driver_sql(
                 "ALTER TABLE listings ADD COLUMN IF NOT EXISTS images JSON"
             )
             conn.exec_driver_sql("UPDATE listings SET images = '[]'::json WHERE images IS NULL")
+            conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN IF NOT EXISTS sex VARCHAR")
+            conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN IF NOT EXISTS breed VARCHAR")
+            conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN IF NOT EXISTS age_months INTEGER")
+            conn.exec_driver_sql("ALTER TABLE listings ADD COLUMN IF NOT EXISTS age_weeks INTEGER")
 
 
 def get_db():

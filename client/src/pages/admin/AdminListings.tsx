@@ -30,6 +30,10 @@ interface ListingDetail {
   stock: number
   unit: string
   district: string
+  sex?: string
+  breed?: string
+  ageMonths?: number
+  ageWeeks?: number
   status: string
   views: number
   rating: number
@@ -308,6 +312,30 @@ export function AdminListings() {
                     <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">District</span>
                     <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.district || "--"}</span>
                   </div>
+                  {selectedListing.breed && (
+                    <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                      <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Breed</span>
+                      <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.breed}</span>
+                    </div>
+                  )}
+                  {selectedListing.sex && (
+                    <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                      <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Sex</span>
+                      <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.sex}</span>
+                    </div>
+                  )}
+                  {(selectedListing.ageMonths ?? 0) > 0 && (
+                    <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                      <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Age</span>
+                      <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.ageMonths} months</span>
+                    </div>
+                  )}
+                  {(selectedListing.ageWeeks ?? 0) > 0 && (
+                    <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
+                      <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Age</span>
+                      <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.ageWeeks} weeks</span>
+                    </div>
+                  )}
                   <div className="flex justify-between py-2 border-b border-outline-variant/20 dark:border-surface-container">
                     <span className="text-label-sm text-on-surface-variant dark:text-outline-variant">Views</span>
                     <span className="text-label-sm text-on-surface dark:text-primary-fixed">{selectedListing.views}</span>

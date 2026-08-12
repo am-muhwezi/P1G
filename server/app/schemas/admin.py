@@ -44,14 +44,18 @@ class AdminListingResponse(BaseModel):
     stock: int
     unit: str
     district: str
+    sex: Optional[str] = None
+    breed: Optional[str] = None
+    ageMonths: Optional[int] = Field(default=None, validation_alias="age_months")
+    ageWeeks: Optional[int] = Field(default=None, validation_alias="age_weeks")
     status: str
     views: int
     rating: float
-    reviewCount: int = Field(alias="review_count")
+    reviewCount: int = Field(validation_alias="review_count")
     image: str
     images: list[str] = []
-    createdAt: datetime = Field(alias="created_at")
-    updatedAt: datetime = Field(alias="updated_at")
+    createdAt: datetime = Field(validation_alias="created_at")
+    updatedAt: datetime = Field(validation_alias="updated_at")
 
     @field_validator("images", mode="before")
     @classmethod

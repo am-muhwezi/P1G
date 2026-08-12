@@ -62,7 +62,11 @@ def create_listing(
         price=data.price,
         stock=data.stock,
         unit=data.unit,
-        district=data.district,
+        district=user.district or "",
+        sex=data.sex,
+        breed=data.breed,
+        age_months=data.age_months,
+        age_weeks=data.age_weeks,
         images=data.images or [],
     )
     if data.image:

@@ -6,16 +6,23 @@ import { useToast } from "../../store/toast"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
 import { uploadListingImages, removeListingImage, imagesConfigured } from "../../lib/storage"
 
+const PIG_TYPES = ["Porkers", "Breeding Sows", "Gilts", "Piglets"] as const
+
 const statusColor: Record<string, string> = {
   active: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
   pending: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20",
   rejected: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20",
+  sold_out: "text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-700/30",
+}
+
+const statusLabel: Record<string, string> = {
+  sold_out: "Sold Out",
 }
 
 function StatusPill({ status }: { status: string }) {
   return (
     <span className={`inline-block px-3 py-1 rounded-full text-label-sm font-label-sm capitalize ${statusColor[status] || "text-gray-500 bg-gray-50"}`}>
-      {status}
+      {statusLabel[status] || status}
     </span>
   )
 }
@@ -36,9 +43,15 @@ export function SellerListings() {
     price: 0,
     stock: 1,
     unit: "pig",
-    district: "",
+    sex: "",
+    breed: "",
+    ageMonths: 0,
+    ageWeeks: 0,
     images: [] as string[],
   })
+
+  const isLivePigs = form.category === "live_pigs"
+  const isPiglet = form.title === "Piglets"
 
   const [uploading, setUploading] = useState(false)
   const [imageInputKey, setImageInputKey] = useState(0)
@@ -62,7 +75,7 @@ export function SellerListings() {
 
   const openCreate = () => {
     setEditing(null)
-    setForm({ title: "", description: "", category: "live_pigs", price: 0, stock: 1, unit: "pig", district: "", images: [] })
+    setForm({ title: "", description: "", category: "live_pigs", price: 0, stock: 1, unit: "pig", sex: "", breed: "", ageMonths: 0, ageWeeks: 0, images: [] })
     sessionUploads.current = []
     setError("")
     setShowForm(true)
@@ -77,7 +90,10 @@ export function SellerListings() {
       price: listing.price,
       stock: listing.stock,
       unit: listing.unit,
-      district: listing.district,
+      sex: listing.sex || "",
+      breed: listing.breed || "",
+      ageMonths: listing.ageMonths || 0,
+      ageWeeks: listing.ageWeeks || 0,
       images: listing.images?.length ? listing.images : listing.image ? [listing.image] : [],
     })
     sessionUploads.current = []
@@ -286,12 +302,60 @@ export function SellerListings() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <Field label="Title">
-                <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-              </Field>
-              <Field label="Description">
-                <textarea className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md resize-none h-24 dark:bg-surface-container dark:text-primary-fixed" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-              </Field>
+              {isLivePigs ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Pig Type">
+                    <select
+                      className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed"
+                      value={form.title}
+                      onChange={(e) => {
+                        const title = e.target.value
+                        const autoFemale = title === "Breeding Sows" || title === "Gilts"
+                        setForm({ ...form, title, ageMonths: 0, ageWeeks: 0, sex: autoFemale ? "Female" : form.sex })
+                      }}
+                    >
+                      <option value="" disabled>Select pig type</option>
+                      {PIG_TYPES.map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </Field>
+                  <Field label={isPiglet ? "Age (Weeks)" : "Age (Months)"}>
+                    <input
+                      type="number"
+                      className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed"
+                      value={(isPiglet ? form.ageWeeks : form.ageMonths) || ""}
+                      onChange={(e) => setForm(isPiglet ? { ...form, ageWeeks: Number(e.target.value) } : { ...form, ageMonths: Number(e.target.value) })}
+                    />
+                  </Field>
+                </div>
+              ) : (
+                <Field label="Title">
+                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                </Field>
+              )}
+              {isLivePigs && (
+                <div className="grid grid-cols-2 gap-4">
+                  <Field label="Sex">
+                    <select className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.sex} onChange={(e) => setForm({ ...form, sex: e.target.value })}>
+                      <option value="">Select sex</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </Field>
+                  <Field label="Breed">
+                    <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" placeholder="e.g. Large White" value={form.breed} onChange={(e) => setForm({ ...form, breed: e.target.value })} />
+                  </Field>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Price (UGX)">
+                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
+                </Field>
+                <Field label="Stock">
+                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
+                </Field>
+              </div>
               <Field label="Photos">
                 {!imagesConfigured ? (
                   <p className="p-3 rounded-xl bg-amber-50 text-amber-700 font-label-sm text-label-sm dark:bg-amber-900/20 dark:text-amber-400">
@@ -341,29 +405,9 @@ export function SellerListings() {
                   </div>
                 )}
               </Field>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Category">
-                  <select className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as Category })}>
-                    {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
-                      <option key={key} value={key}>{label}</option>
-                    ))}
-                  </select>
-                </Field>
-                <Field label="District">
-                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.district} onChange={(e) => setForm({ ...form, district: e.target.value })} />
-                </Field>
-              </div>
-              <div className="grid grid-cols-3 gap-4">
-                <Field label="Price (UGX)">
-                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.price || ""} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} />
-                </Field>
-                <Field label="Stock">
-                  <input type="number" className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.stock} onChange={(e) => setForm({ ...form, stock: Number(e.target.value) })} />
-                </Field>
-                <Field label="Unit">
-                  <input className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md dark:bg-surface-container dark:text-primary-fixed" value={form.unit} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-                </Field>
-              </div>
+              <Field label="Description">
+                <textarea className="w-full px-4 py-3 bg-warm-beige rounded-xl focus:ring-2 focus:ring-primary text-body-md resize-none h-24 dark:bg-surface-container dark:text-primary-fixed" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              </Field>
               {error && <p className="font-label-sm text-label-sm text-error">{error}</p>}
             </div>
             <div className="flex justify-end gap-3 p-6 border-t border-outline-variant/30 dark:border-surface-container">

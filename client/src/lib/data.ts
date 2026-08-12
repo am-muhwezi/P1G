@@ -52,6 +52,10 @@ export interface Listing {
   stock: number
   unit: string
   district: string
+  sex?: string
+  breed?: string
+  ageMonths?: number
+  ageWeeks?: number
   status: ListingStatus
   views: number
   rating: number
