@@ -3,6 +3,7 @@ import { api } from "../../lib/api"
 import { formatDate, formatUGX, CATEGORY_LABELS } from "../../lib/data"
 import { Search, Shield, ShieldCheck, ShieldX, Users, UserPlus, Store, UserCog, X, AlertTriangle, Trash2, Package, Eye } from "lucide-react"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
+import { useToast } from "../../store/toast"
 
 interface UserData {
   id: string
@@ -52,6 +53,7 @@ const roleIcon: Record<string, React.ReactNode> = {
 }
 
 export function AdminUsers() {
+  const toast = useToast((s) => s.toast)
   const [users, setUsers] = useState<UserData[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState("")
@@ -110,8 +112,8 @@ export function AdminUsers() {
       await api.del(`/api/admin/users/${deleteTarget.id}`)
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id))
       setDeleteTarget(null)
-    } catch {
-      setDeleteTarget(null)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to delete user", "error")
     } finally {
       setDeleting(false)
     }

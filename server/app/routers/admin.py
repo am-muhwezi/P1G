@@ -218,6 +218,21 @@ def delete_user(
     user = db.query(User).filter(User.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    order_count = db.query(func.count(Order.id)).filter(Order.buyer_id == user_id).scalar() or 0
+    sold_items_count = db.query(func.count(OrderItem.id)).filter(OrderItem.seller_id == user_id).scalar() or 0
+    if order_count or sold_items_count:
+        parts = []
+        if order_count:
+            parts.append(f"{order_count} order(s) placed")
+        if sold_items_count:
+            parts.append(f"{sold_items_count} item(s) sold")
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot delete {user.name}: they have {' and '.join(parts)} on record. Suspend the account instead to preserve order history.",
+        )
+
+    db.query(Listing).filter(Listing.seller_id == user_id).delete(synchronize_session=False)
     db.delete(user)
     db.commit()
 

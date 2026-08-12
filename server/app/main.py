@@ -3,7 +3,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database import init_db, SessionLocal
-from app.seed import seed_all
 from app.routers.waitlist import router as waitlist_router
 from app.routers.auth import router as auth_router
 from app.routers.seller import router as seller_router
@@ -36,11 +35,6 @@ app.include_router(admin_router)
 @app.on_event("startup")
 def on_startup():
     init_db()
-    db = SessionLocal()
-    try:
-        seed_all(db)
-    finally:
-        db.close()
 
 
 @app.get("/health")
