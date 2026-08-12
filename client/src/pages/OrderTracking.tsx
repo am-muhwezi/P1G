@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react"
 import { useParams } from "react-router-dom"
 import { api } from "../lib/api"
-import { formatDate, formatUGX, type Order } from "../lib/data"
+import { formatDate, formatUGX, formatOrderId, type Order } from "../lib/data"
 import { OrderTimeline } from "../components/features/OrderTimeline"
 import { TransactionLog } from "../components/features/TransactionLog"
 
@@ -74,7 +74,7 @@ export function OrderTracking() {
                 Payment secured
               </span>
             </div>
-            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1 dark:text-primary-fixed">Order #{order.id}</h2>
+            <h2 className="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary mb-1 dark:text-primary-fixed">Order {formatOrderId(order.id)}</h2>
             <p className="font-body-lg text-body-lg text-on-surface-variant mb-4 dark:text-outline-variant">{firstItem?.title}</p>
             <div className="flex flex-wrap gap-4 text-label-lg font-label-lg">
               <div className="flex items-center gap-1 text-on-surface dark:text-primary-fixed">

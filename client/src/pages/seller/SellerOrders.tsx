@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
-import { formatUGX, formatDate, type Order } from "../../lib/data"
+import { formatUGX, formatDate, formatOrderId, type Order } from "../../lib/data"
 import { Search, ChevronDown, ChevronUp, ShoppingCart, Clock, CheckCircle, DollarSign } from "lucide-react"
 
 const statusColor: Record<string, string> = {
@@ -29,7 +29,7 @@ function OrderRow({ order }: { order: Order }) {
         onClick={() => setExpanded(!expanded)}
       >
         <td className="px-4 py-4">
-          <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{order.id}</p>
+          <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{formatOrderId(order.id)}</p>
         </td>
         <td className="px-4 py-4 text-label-sm text-on-surface-variant dark:text-outline-variant">{order.buyerName}</td>
         <td className="px-4 py-4 text-label-sm text-on-surface-variant dark:text-outline-variant">{formatDate(order.createdAt)}</td>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { api } from "../../lib/api"
-import { formatUGX, formatDate, type Listing, type Order } from "../../lib/data"
+import { formatUGX, formatDate, formatOrderId, type Listing, type Order } from "../../lib/data"
 import { Package, ShoppingCart, Eye, TrendingUp, ArrowUp, AlertCircle } from "lucide-react"
 
 const statusColor: Record<string, string> = {
@@ -195,7 +195,7 @@ export function SellerDashboard() {
               {data.recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-outline-variant/30 last:border-0 dark:border-surface-container">
                   <div className="flex-1 min-w-0">
-                    <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{order.id}</p>
+                    <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{formatOrderId(order.id)}</p>
                     <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">{order.buyerName} &middot; {formatDate(order.createdAt)}</p>
                   </div>
                   <div className="flex items-center gap-3">

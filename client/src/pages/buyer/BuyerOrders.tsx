@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
-import { formatUGX, formatDate, type Order } from "../../lib/data"
+import { formatUGX, formatDate, formatOrderId, type Order } from "../../lib/data"
 import { Package, ShoppingCart, Clock, CheckCircle, Calendar, MapPin, AlertCircle } from "lucide-react"
 import { Link } from "react-router-dom"
 
@@ -150,7 +150,7 @@ export function BuyerOrders() {
             >
               <div className="flex items-start justify-between mb-3">
                 <div>
-                  <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{order.id}</p>
+                  <p className="font-label-lg text-label-lg text-on-surface dark:text-primary-fixed">{formatOrderId(order.id)}</p>
                   <div className="flex items-center gap-3 mt-1 text-label-sm text-on-surface-variant dark:text-outline-variant">
                     <span className="flex items-center gap-1"><Calendar size={12} />{formatDate(order.createdAt)}</span>
                     <span className="flex items-center gap-1"><MapPin size={12} />{order.district}</span>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { api } from "../../lib/api"
-import { formatUGX, formatDate } from "../../lib/data"
+import { formatUGX, formatDate, formatOrderId } from "../../lib/data"
 import { Users, Package, ShoppingCart, TrendingUp } from "lucide-react"
 
 interface DashboardData {
@@ -109,7 +109,7 @@ export function AdminDashboard() {
               {d.recentOrders.map((order) => (
                 <div key={order.id} className="flex items-center justify-between py-2 border-b border-outline-variant/20 last:border-0 dark:border-surface-container">
                   <div className="flex-1 min-w-0">
-                    <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{order.id}</p>
+                    <p className="font-label-lg text-label-lg text-on-surface truncate dark:text-primary-fixed">{formatOrderId(order.id)}</p>
                     <p className="text-label-sm text-on-surface-variant dark:text-outline-variant">{order.buyerName} &middot; {formatDate(order.createdAt)}</p>
                   </div>
                   <span className="font-label-lg text-label-lg text-primary dark:text-primary-fixed">{formatUGX(order.total)}</span>

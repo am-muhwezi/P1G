@@ -6,7 +6,7 @@ import { useCart } from "../../store/cart"
 import { useAuth } from "../../store/auth"
 import { useToast } from "../../store/toast"
 import { CheckoutAuthGate } from "../../components/auth/CheckoutAuthGate"
-import { formatUGX, UGANDAN_DISTRICTS } from "../../lib/data"
+import { formatUGX, formatOrderId, UGANDAN_DISTRICTS } from "../../lib/data"
 
 type Step = "cart" | "details" | "review" | "success"
 
@@ -222,7 +222,7 @@ export function Cart() {
         </div>
         <h1 className="font-headline-xl text-headline-xl text-on-surface dark:text-primary-fixed mb-2">Order Placed!</h1>
         <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant mb-6">
-          Your order <span className="font-bold text-on-surface dark:text-primary-fixed">{orderNumber}</span> has been confirmed.
+          Your order <span className="font-bold text-on-surface dark:text-primary-fixed">{formatOrderId(orderNumber)}</span> has been confirmed.
         </p>
         <div className="bg-surface-container-lowest dark:bg-surface-dim rounded-xl p-6 border border-outline-variant/20 mb-8">
           <p className="font-body-md text-body-md text-on-surface-variant dark:text-outline-variant mb-1">Estimated Delivery</p>

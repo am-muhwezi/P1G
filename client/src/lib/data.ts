@@ -131,6 +131,11 @@ export function formatDate(iso: string): string {
   return d.toLocaleDateString("en-UG", { year: "numeric", month: "short", day: "numeric" })
 }
 
+export function formatOrderId(id: string): string {
+  if (!id) return "--"
+  return `#${id.slice(0, 8).toUpperCase()}`
+}
+
 export const UGANDAN_DISTRICTS = [
   "Kampala",
   "Masaka",
