@@ -2,7 +2,7 @@ import { useState } from "react"
 import { NavLink, useNavigate, Outlet } from "react-router-dom"
 import { useAuth } from "../../store/auth"
 import { useTheme } from "../../context/ThemeContext"
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, LogOut, Sun, Moon, Menu } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, LogOut, Sun, Moon, Menu, Store } from "lucide-react"
 
 interface NavItem {
   to: string
@@ -16,6 +16,7 @@ const SELLER_NAV: NavItem[] = [
   { to: "/seller/orders", label: "Orders", icon: <ShoppingCart size={20} /> },
   { to: "/seller/analytics", label: "Analytics", icon: <BarChart3 size={20} /> },
   { to: "/seller/settings", label: "Settings", icon: <Settings size={20} /> },
+  { to: "/market", label: "View Marketplace", icon: <Store size={20} /> },
 ]
 
 export function AppShell() {

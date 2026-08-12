@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { Listing } from '../../lib/data';
 import { CATEGORY_EMOJI, CATEGORY_LABELS, formatUGX } from '../../lib/data';
 import { useNavigate } from 'react-router-dom';
@@ -9,20 +10,62 @@ interface ProductCardProps {
   plusOverlay?: boolean;
 }
 
+const PLACEHOLDER_IMAGE = 'https://placehold.co/600x400/e8fff0/0d631b?text=No+Image';
+
 export function ProductCard({ listing, onAddToCart, plusOverlay }: ProductCardProps) {
   const navigate = useNavigate();
+  const [activeImage, setActiveImage] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  const galleryImages = listing.images?.length ? listing.images : listing.image ? [listing.image] : [];
+  const displayImages = galleryImages.length ? galleryImages : [PLACEHOLDER_IMAGE];
+
+  useEffect(() => {
+    if (displayImages.length <= 1 || paused) return;
+    const id = window.setInterval(() => {
+      setActiveImage((i) => (i + 1) % displayImages.length);
+    }, 2500);
+    return () => window.clearInterval(id);
+  }, [displayImages.length, paused]);
+
+  const handleMouseEnter = () => setPaused(true);
+  const handleMouseLeave = () => setPaused(false);
 
   return (
     <div
       className="bg-surface-container-lowest rounded-xl overflow-hidden shadow-sm border border-outline-variant/20 group cursor-pointer hover:shadow-md transition-all dark:bg-surface-dim dark:border-surface-container"
       onClick={() => navigate(`/product/${listing.id}`)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       <div className="relative h-48 w-full overflow-hidden">
-        <img
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          src={listing.image || 'https://placehold.co/600x400/e8fff0/0d631b?text=No+Image'}
-          alt={listing.title}
-        />
+        <div className="w-full h-full group-hover:scale-105 transition-transform duration-500">
+          <div
+            className="flex h-full transition-transform duration-500 ease-out"
+            style={{ transform: `translateX(-${activeImage * 100}%)` }}
+          >
+            {displayImages.map((src, i) => (
+              <img
+                key={src + i}
+                className="w-full h-full object-cover shrink-0"
+                src={src}
+                alt={listing.title}
+                loading={i === 0 ? 'eager' : 'lazy'}
+              />
+            ))}
+          </div>
+        </div>
+
+        {displayImages.length > 1 && (
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {displayImages.map((_, i) => (
+              <span
+                key={i}
+                className={`h-1.5 w-1.5 rounded-full transition-colors ${i === activeImage ? 'bg-white' : 'bg-white/50'}`}
+              />
+            ))}
+          </div>
+        )}
 
         {plusOverlay && onAddToCart && (
           <button
