@@ -3,10 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../lib/api';
 import { formatUGX, formatDate, type Listing } from '../lib/data';
 import { Button } from '../components/ui/Button';
+import { useCart } from '../store/cart';
+import { useToast } from '../store/toast';
 
 export function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const addItem = useCart((s) => s.addItem);
+  const toast = useToast((s) => s.toast);
   const [listing, setListing] = useState<Listing | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
@@ -172,7 +176,15 @@ export function ProductDetail() {
             </div>
 
             <div className="space-y-3">
-              <Button className="w-full" onClick={() => navigate(`/order/${listing.id}`)}>
+              <Button
+                className="w-full"
+                disabled={listing.stock <= 0}
+                onClick={() => {
+                  if (listing.stock <= 0) { toast("This item is out of stock", "error"); return }
+                  addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit, stock: listing.stock })
+                  navigate('/cart')
+                }}
+              >
                 <span className="material-symbols-outlined" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
                 Buy Now
               </Button>

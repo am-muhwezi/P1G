@@ -97,6 +97,9 @@ def create_order(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
+    if user.role != "buyer":
+        raise HTTPException(status_code=403, detail="Only buyer accounts can place orders")
+
     if not data.items:
         raise HTTPException(status_code=422, detail="Order must have at least one item")
 

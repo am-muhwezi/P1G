@@ -1,8 +1,11 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { ShoppingCart, Trash2, Minus, Plus, CheckCircle, ChevronLeft, User, Mail, Phone, MapPin } from "lucide-react"
 import { api } from "../../lib/api"
 import { useCart } from "../../store/cart"
+import { useAuth } from "../../store/auth"
+import { useToast } from "../../store/toast"
+import { CheckoutAuthGate } from "../../components/auth/CheckoutAuthGate"
 import { formatUGX, UGANDAN_DISTRICTS } from "../../lib/data"
 
 type Step = "cart" | "details" | "review" | "success"
@@ -11,7 +14,10 @@ const DELIVERY_FEE = 25000
 
 export function Cart() {
   const { items, removeItem, updateQty, clearCart, total } = useCart()
+  const auth = useAuth()
+  const toast = useToast((s) => s.toast)
   const [step, setStep] = useState<Step>("cart")
+  const [showAuthGate, setShowAuthGate] = useState(false)
   const [name, setName] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
@@ -24,6 +30,45 @@ export function Cart() {
 
   const subtotal = total()
   const grandTotal = subtotal + DELIVERY_FEE
+
+  useEffect(() => {
+    if (step !== "cart" || items.length === 0) return
+    const ids = items.map((i) => i.listingId).join(",")
+    api.get(`/api/listings/by-ids?ids=${encodeURIComponent(ids)}`)
+      .then((live: any[]) => {
+        const changes = useCart.getState().reconcile(live)
+        if (!changes.length) return
+        const removed = changes.filter((c) => c.type === "removed").length
+        const clamped = changes.filter((c) => c.type === "clamped").length
+        const parts: string[] = []
+        if (removed) parts.push(`${removed} item${removed > 1 ? "s" : ""} removed (no longer available)`)
+        if (clamped) parts.push(`${clamped} item${clamped > 1 ? "s" : ""} adjusted to available stock`)
+        toast(parts.join("; "), "info")
+      })
+      .catch(() => { /* stay silent; server still validates at order placement */ })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step])
+
+  const handleProceedToCheckout = () => {
+    if (!auth.isAuthenticated) {
+      setShowAuthGate(true)
+      return
+    }
+    if (auth.role !== "buyer") {
+      toast("Only buyer accounts can place orders", "error")
+      return
+    }
+    setStep("details")
+  }
+
+  const handleAuthenticated = () => {
+    setShowAuthGate(false)
+    if (useAuth.getState().role !== "buyer") {
+      toast("Only buyer accounts can place orders", "error")
+      return
+    }
+    setStep("details")
+  }
 
   const handlePlaceOrder = async () => {
     setOrdering(true)
@@ -240,11 +285,17 @@ export function Cart() {
               <span className="font-label-lg text-label-lg text-primary dark:text-primary-fixed">{formatUGX(grandTotal)}</span>
             </div>
           </div>
-          <button onClick={() => setStep("details")} className="w-full py-4 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg hover:bg-primary/90 transition-colors dark:bg-primary-fixed dark:text-on-primary-fixed">
+          <button onClick={handleProceedToCheckout} className="w-full py-4 bg-primary text-on-primary rounded-xl font-label-lg text-label-lg hover:bg-primary/90 transition-colors dark:bg-primary-fixed dark:text-on-primary-fixed">
             Proceed to Checkout
           </button>
         </>
       )}
+
+      <CheckoutAuthGate
+        open={showAuthGate}
+        onClose={() => setShowAuthGate(false)}
+        onAuthenticated={handleAuthenticated}
+      />
     </div>
   )
 }
