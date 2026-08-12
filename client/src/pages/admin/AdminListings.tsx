@@ -47,12 +47,17 @@ const statusColor: Record<string, string> = {
   active: "text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-900/20",
   pending: "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/20",
   rejected: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/20",
+  sold_out: "text-slate-600 bg-slate-100 dark:text-slate-300 dark:bg-slate-700/30",
+}
+
+const statusLabel: Record<string, string> = {
+  sold_out: "Sold Out",
 }
 
 function StatusPill({ status }: { status: string }) {
   return (
     <span className={`inline-block px-3 py-1 rounded-full text-label-sm font-label-sm capitalize ${statusColor[status] || ""}`}>
-      {status}
+      {statusLabel[status] || status}
     </span>
   )
 }

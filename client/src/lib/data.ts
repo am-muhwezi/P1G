@@ -1,6 +1,6 @@
 export type Role = "buyer" | "seller" | "admin"
 export type UserStatus = "active" | "pending" | "suspended"
-export type ListingStatus = "active" | "pending" | "rejected"
+export type ListingStatus = "active" | "pending" | "rejected" | "sold_out"
 export type OrderStatus = "pending" | "confirmed" | "in_transit" | "delivered" | "cancelled"
 export type Category = "live_pigs" | "semen" | "feed" | "medicines" | "vets" | "pork"
 
@@ -72,6 +72,7 @@ export interface CartItem {
   quantity: number
   sellerName: string
   unit: string
+  stock: number
 }
 
 export interface Order {

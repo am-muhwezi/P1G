@@ -29,14 +29,14 @@ class AdminUserUpdate(BaseModel):
 
 
 class AdminListingStatusUpdate(BaseModel):
-    status: Literal["active", "pending", "rejected"]
+    status: Literal["active", "pending", "rejected", "sold_out"]
 
 
 class AdminListingResponse(BaseModel):
     id: str
-    sellerId: str = Field(alias="seller_id")
-    sellerName: str = Field(alias="seller_name")
-    sellerVerified: bool = Field(alias="seller_verified")
+    sellerId: str = Field(validation_alias="seller_id")
+    sellerName: str = Field(validation_alias="seller_name")
+    sellerVerified: bool = Field(validation_alias="seller_verified")
     title: str
     description: str
     category: str

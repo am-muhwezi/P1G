@@ -7,6 +7,7 @@ import { api } from "../../lib/api"
 import { marketplaceFilters, type Listing } from "../../lib/data"
 import { useCart } from "../../store/cart"
 import { useAuth } from "../../store/auth"
+import { useToast } from "../../store/toast"
 import { AlertCircle } from "lucide-react"
 
 export function BuyerHome() {
@@ -18,6 +19,7 @@ export function BuyerHome() {
   const [error, setError] = useState("")
   const addItem = useCart((s) => s.addItem)
   const auth = useAuth()
+  const toast = useToast((s) => s.toast)
 
   useEffect(() => {
     setLoading(true)
@@ -33,7 +35,8 @@ export function BuyerHome() {
   }, [searchParams])
 
   const handleAddToCart = (listing: Listing) => {
-    addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit })
+    if (listing.stock <= 0) { toast("This item is out of stock", "error"); return }
+    addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit, stock: listing.stock })
   }
 
   const handleFilterChange = (id: string) => {

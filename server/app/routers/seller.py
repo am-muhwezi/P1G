@@ -90,6 +90,8 @@ def update_listing(
     patch = data.model_dump(exclude_unset=True)
     for key, val in patch.items():
         setattr(listing, key, val)
+    if "stock" in patch and listing.status == "sold_out" and listing.stock > 0:
+        listing.status = "active"
     if "images" in patch:
         if patch["images"]:
             if not listing.image:

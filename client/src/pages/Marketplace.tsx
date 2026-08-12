@@ -6,6 +6,7 @@ import { Input } from '../components/ui/Input';
 import { api } from '../lib/api';
 import { marketplaceFilters, type Listing } from '../lib/data';
 import { useCart } from '../store/cart';
+import { useToast } from '../store/toast';
 import { ShoppingCart, AlertCircle } from 'lucide-react';
 
 export function Marketplace() {
@@ -17,6 +18,7 @@ export function Marketplace() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const { addItem, items } = useCart();
+  const toast = useToast((s) => s.toast);
   const totalQty = items.reduce((s, i) => s + i.quantity, 0);
 
   useEffect(() => {
@@ -33,7 +35,8 @@ export function Marketplace() {
   }, [searchParams])
 
   const handleAddToCart = (listing: Listing) => {
-    addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit });
+    if (listing.stock <= 0) { toast("This item is out of stock", "error"); return; }
+    addItem({ listingId: listing.id, title: listing.title, price: listing.price, quantity: 1, sellerName: listing.sellerName, unit: listing.unit, stock: listing.stock });
   };
 
   const handleFilterChange = (id: string) => {

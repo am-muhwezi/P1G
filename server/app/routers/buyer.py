@@ -115,6 +115,8 @@ def create_order(
             raise HTTPException(status_code=400, detail=f"Not enough stock for '{listing.title}'")
 
         listing.stock -= item_data.quantity
+        if listing.stock <= 0:
+            listing.status = "sold_out"
         subtotal = listing.price * item_data.quantity
         total += subtotal
 
@@ -184,6 +186,8 @@ def cancel_order(order_id: str, db: Session = Depends(get_db), user: User = Depe
         listing = db.query(Listing).filter(Listing.id == item.listing_id).first()
         if listing:
             listing.stock += item.quantity
+            if listing.status == "sold_out" and listing.stock > 0:
+                listing.status = "active"
     db.commit()
     db.refresh(order)
     return order

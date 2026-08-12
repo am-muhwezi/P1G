@@ -86,6 +86,10 @@ export function Cart() {
       setStep("success")
     } catch (err: any) {
       setError(err.message)
+      const ids = items.map((i) => i.listingId).join(",")
+      api.get(`/api/listings/by-ids?ids=${encodeURIComponent(ids)}`)
+        .then((live: any[]) => useCart.getState().reconcile(live))
+        .catch(() => { /* best-effort; server remains source of truth */ })
     } finally {
       setOrdering(false)
     }
@@ -258,7 +262,14 @@ export function Cart() {
                     <Minus size={14} />
                   </button>
                   <span className="w-8 text-center font-body-md text-body-md text-on-surface dark:text-primary-fixed">{item.quantity}</span>
-                  <button onClick={() => updateQty(item.listingId, item.quantity + 1)} className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim transition-colors">
+                  <button
+                    onClick={() => {
+                      if (item.quantity >= item.stock) { toast(`Only ${item.stock} in stock`, "info"); return }
+                      updateQty(item.listingId, item.quantity + 1)
+                    }}
+                    disabled={item.quantity >= item.stock}
+                    className="w-8 h-8 rounded-full border border-outline-variant flex items-center justify-center text-on-surface dark:text-outline-variant hover:bg-surface-container dark:hover:bg-surface-dim transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
                     <Plus size={14} />
                   </button>
                 </div>
