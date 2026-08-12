@@ -10,10 +10,10 @@ class AdminUserResponse(BaseModel):
     phone: Optional[str] = None
     role: str
     district: Optional[str] = None
-    farmName: Optional[str] = Field(default=None, alias="farm_name")
+    farmName: Optional[str] = Field(default=None, validation_alias="farm_name")
     status: str = "active"
-    suspendedAt: Optional[datetime] = Field(default=None, alias="suspended_at")
-    createdAt: datetime = Field(alias="created_at")
+    suspendedAt: Optional[datetime] = Field(default=None, validation_alias="suspended_at")
+    createdAt: datetime = Field(validation_alias="created_at")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -69,11 +69,11 @@ class AdminListingDetailResponse(AdminListingResponse):
 
 
 class AdminOrderItemResponse(BaseModel):
-    listingId: str = Field(alias="listing_id")
+    listingId: str = Field(validation_alias="listing_id")
     title: str
     price: int
     quantity: int
-    sellerName: str = Field(alias="seller_name")
+    sellerName: str = Field(validation_alias="seller_name")
     unit: str
 
     model_config = {"from_attributes": True, "populate_by_name": True}
@@ -81,27 +81,27 @@ class AdminOrderItemResponse(BaseModel):
 
 class AdminOrderResponse(BaseModel):
     id: str
-    buyerId: str = Field(alias="buyer_id")
-    buyerName: str = Field(alias="buyer_name")
+    buyerId: str = Field(validation_alias="buyer_id")
+    buyerName: str = Field(validation_alias="buyer_name")
     items: list[AdminOrderItemResponse]
     total: int
-    deliveryFee: int = Field(alias="delivery_fee")
+    deliveryFee: int = Field(validation_alias="delivery_fee")
     status: str
-    paymentMethod: str = Field(alias="payment_method")
+    paymentMethod: str = Field(validation_alias="payment_method")
     address: str
     district: str
     notes: Optional[str] = None
-    createdAt: datetime = Field(alias="created_at")
-    updatedAt: datetime = Field(alias="updated_at")
+    createdAt: datetime = Field(validation_alias="created_at")
+    updatedAt: datetime = Field(validation_alias="updated_at")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
 
 class AdminSettingsResponse(BaseModel):
-    siteName: str = Field(alias="site_name")
-    contactEmail: str = Field(alias="contact_email")
-    commissionRate: int = Field(alias="commission_rate")
-    maintenanceMode: bool = Field(alias="maintenance_mode")
+    siteName: str = Field(validation_alias="site_name")
+    contactEmail: str = Field(validation_alias="contact_email")
+    commissionRate: int = Field(validation_alias="commission_rate")
+    maintenanceMode: bool = Field(validation_alias="maintenance_mode")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 
@@ -151,10 +151,10 @@ class AdminUserDetailResponse(BaseModel):
     phone: Optional[str] = None
     role: str
     district: Optional[str] = None
-    farmName: Optional[str] = Field(default=None, alias="farm_name")
+    farmName: Optional[str] = Field(default=None, validation_alias="farm_name")
     status: str = "active"
-    suspendedAt: Optional[datetime] = Field(default=None, alias="suspended_at")
-    createdAt: datetime = Field(alias="created_at")
+    suspendedAt: Optional[datetime] = Field(default=None, validation_alias="suspended_at")
+    createdAt: datetime = Field(validation_alias="created_at")
     listingsCount: int = 0
     ordersCount: int = 0
     revenue: int = 0
@@ -175,6 +175,6 @@ class AdminWaitlistEntryResponse(BaseModel):
     email: str
     phone: str
     interest: str
-    createdAt: datetime = Field(alias="created_at")
+    createdAt: datetime = Field(validation_alias="created_at")
 
     model_config = {"from_attributes": True, "populate_by_name": True}
