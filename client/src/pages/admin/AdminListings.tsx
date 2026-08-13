@@ -3,6 +3,7 @@ import { api } from "../../lib/api"
 import { formatUGX, formatDate, CATEGORY_LABELS } from "../../lib/data"
 import { Search, CheckCircle, XCircle, Eye, Package, TrendingUp, Clock, X, Trash2, UserX, UserCheck } from "lucide-react"
 import { ConfirmModal } from "../../components/ui/ConfirmModal"
+import { useToast } from "../../store/toast"
 
 interface ListingData {
   id: string
@@ -71,6 +72,7 @@ export function AdminListings() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null)
   const [deleting, setDeleting] = useState(false)
   const [suspendLoading, setSuspendLoading] = useState(false)
+  const toast = useToast((s) => s.toast)
 
   useEffect(() => {
     api.get("/api/admin/listings").then(setListings).catch(() => setListings([])).finally(() => setLoading(false))
@@ -91,7 +93,10 @@ export function AdminListings() {
       await api.patch(`/api/admin/listings/${id}/status`, { status: "active" })
       setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: "active" } : l))
       if (selectedListing?.id === id) setSelectedListing((prev) => prev ? { ...prev, status: "active" } : null)
-    } catch { /* ignore */ }
+      toast("Listing approved")
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to approve listing", "error")
+    }
   }
 
   const reject = async (id: string) => {
@@ -99,7 +104,10 @@ export function AdminListings() {
       await api.patch(`/api/admin/listings/${id}/status`, { status: "rejected" })
       setListings((prev) => prev.map((l) => l.id === id ? { ...l, status: "rejected" } : l))
       if (selectedListing?.id === id) setSelectedListing((prev) => prev ? { ...prev, status: "rejected" } : null)
-    } catch { /* ignore */ }
+      toast("Listing rejected")
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to reject listing", "error")
+    }
   }
 
   const openDetail = async (listingId: string) => {
@@ -122,9 +130,10 @@ export function AdminListings() {
       await api.del(`/api/admin/listings/${deleteTarget.id}`)
       setListings((prev) => prev.filter((l) => l.id !== deleteTarget.id))
       setSelectedListing(null)
+      toast("Listing deleted")
       setDeleteTarget(null)
-    } catch {
-      setDeleteTarget(null)
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to delete listing", "error")
     } finally {
       setDeleting(false)
     }
@@ -137,8 +146,9 @@ export function AdminListings() {
     try {
       await api.patch(`/api/admin/users/${selectedListing.sellerId}/status`, { status: newStatus })
       setSelectedListing({ ...selectedListing, sellerStatus: newStatus })
-    } catch {
-      // ignore
+      toast(newStatus === "suspended" ? "Seller suspended" : "Seller reactivated")
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to update seller status", "error")
     } finally {
       setSuspendLoading(false)
     }

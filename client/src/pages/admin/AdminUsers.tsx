@@ -98,8 +98,9 @@ export function AdminUsers() {
       await api.patch(`/api/admin/users/${selectedUser.id}/status`, { status: newStatus })
       setSelectedUser({ ...selectedUser, status: newStatus, suspendedAt: newStatus === "suspended" ? new Date().toISOString() : undefined })
       setUsers((prev) => prev.map((u) => (u.id === selectedUser.id ? { ...u, status: newStatus } : u)))
-    } catch {
-      // ignore
+      toast(newStatus === "suspended" ? "Account suspended" : "Account reactivated")
+    } catch (err) {
+      toast(err instanceof Error ? err.message : "Failed to update account status", "error")
     } finally {
       setActionLoading(false)
     }
@@ -111,6 +112,7 @@ export function AdminUsers() {
     try {
       await api.del(`/api/admin/users/${deleteTarget.id}`)
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id))
+      toast("User deleted")
       setDeleteTarget(null)
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to delete user", "error")

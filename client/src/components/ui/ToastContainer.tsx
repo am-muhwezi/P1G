@@ -20,7 +20,7 @@ export function ToastContainer() {
     <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm">
       {toasts.map((t) => (
         <div
-          key={t.id}
+          key={`${t.id}-${t.bump}`}
           className={`flex items-start gap-3 px-4 py-3 rounded-xl shadow-lg border animate-slide-in ${styles[t.type]}`}
         >
           {icons[t.type]}

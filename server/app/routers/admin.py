@@ -387,6 +387,14 @@ def delete_listing(
     listing = db.query(Listing).filter(Listing.id == listing_id).first()
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
+
+    order_items_count = db.query(func.count(OrderItem.id)).filter(OrderItem.listing_id == listing_id).scalar() or 0
+    if order_items_count:
+        raise HTTPException(
+            status_code=409,
+            detail=f"Cannot delete '{listing.title}': it has {order_items_count} order(s) on record. Reject or deactivate it instead to preserve order history.",
+        )
+
     db.delete(listing)
     db.commit()
 
