@@ -1,5 +1,6 @@
 import { Hero } from '../components/features/Hero';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useEffect } from 'react';
 
 const services = [
   { icon: "🐷", title: "Live Pigs", desc: "Breeding stock, piglets, and weaners from verified breeders across Uganda." },
@@ -26,6 +27,13 @@ const stats = [
 
 export function Landing() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  }, [location.hash]);
 
   return (
     <div>

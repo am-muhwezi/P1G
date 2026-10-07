@@ -4,10 +4,10 @@ import { useCart } from '../../store/cart';
 import { ShoppingCart, User } from 'lucide-react';
 
 const navLinks = [
-  { to: '/market', label: 'Marketplace' },
-  { to: '/#how-it-works', label: 'How It Works', hash: true },
-  { to: '/#services', label: 'Services', hash: true },
-  { to: '/#about', label: 'About Us', hash: true },
+  { to: '/market', label: 'Marketplace', hash: false },
+  { to: '/home#how-it-works', label: 'How It Works', hash: true },
+  { to: '/home#services', label: 'Services', hash: true },
+  { to: '/home#about', label: 'About Us', hash: true },
 ];
 
 export function Header() {
@@ -17,16 +17,7 @@ export function Header() {
   const cartCount = useCart((s) => s.items.reduce((sum, i) => sum + i.quantity, 0));
 
   const handleNavClick = (link: typeof navLinks[number]) => {
-    if (link.hash) {
-      if (location.pathname === '/') {
-        const el = document.getElementById('how-it-works');
-        if (el) el.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        navigate('/' + link.to.split('/')[1]);
-      }
-    } else {
-      navigate(link.to);
-    }
+    navigate(link.to);
   };
 
   return (

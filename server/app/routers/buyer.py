@@ -2,7 +2,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.exc import IntegrityError
 
 from app.database import get_db
@@ -29,8 +29,12 @@ def _viewer_key(request: Request) -> str:
 def list_listings(
     category: str = "",
     district: str = "",
+    breed: str = "",
     search: str = "",
     sort: str = "-created_at",
+    min_price: int | None = Query(default=None, ge=0),
+    max_price: int | None = Query(default=None, ge=0),
+    verified: bool | None = None,
     db: Session = Depends(get_db),
 ):
     q = db.query(Listing).filter(Listing.status == "active")
@@ -38,8 +42,16 @@ def list_listings(
         q = q.filter(Listing.category == category)
     if district:
         q = q.filter(Listing.district == district)
+    if breed:
+        q = q.filter(Listing.breed == breed)
     if search:
         q = q.filter(Listing.title.ilike(f"%{search}%"))
+    if min_price is not None:
+        q = q.filter(Listing.price >= min_price)
+    if max_price is not None:
+        q = q.filter(Listing.price <= max_price)
+    if verified is not None:
+        q = q.filter(Listing.seller_verified == verified)
     if sort == "price":
         q = q.order_by(Listing.price.asc())
     elif sort == "-price":
@@ -49,6 +61,20 @@ def list_listings(
     else:
         q = q.order_by(Listing.created_at.desc())
     return q.all()
+
+
+@router.get("/listings/filters")
+def get_listing_filters(db: Session = Depends(get_db)):
+    breeds = [
+        row[0]
+        for row in db.query(Listing.breed)
+        .filter(Listing.status == "active", Listing.breed.isnot(None), Listing.breed != "")
+        .distinct()
+        .order_by(Listing.breed.asc())
+        .all()
+    ]
+    max_price = db.query(func.max(Listing.price)).filter(Listing.status == "active").scalar() or 0
+    return {"breeds": breeds, "maxPrice": max_price}
 
 
 @router.get("/listings/by-ids", response_model=list[ListingResponse])

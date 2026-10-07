@@ -70,6 +70,52 @@
   border-radius: 10px;
 }
 
+.range-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.range-slider-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  border: 3px solid white;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.dark .range-slider-thumb::-webkit-slider-thumb {
+  background: var(--color-primary-fixed);
+  border-color: var(--color-surface-dim);
+}
+
+.range-slider-thumb::-moz-range-thumb {
+  pointer-events: auto;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 3px solid white;
+  background: var(--color-primary);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  cursor: pointer;
+}
+
+.dark .range-slider-thumb::-moz-range-thumb {
+  background: var(--color-primary-fixed);
+  border-color: var(--color-surface-dim);
+}
+
+.range-slider-thumb::-moz-range-track {
+  background: transparent;
+  border: none;
+}
+
 .step-active::after {
   content: '';
   position: absolute;

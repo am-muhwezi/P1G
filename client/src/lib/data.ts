@@ -159,10 +159,18 @@ export const UGANDAN_DISTRICTS = [
   "Rakai",
 ] as const
 
-export const marketplaceFilters = [
-  { id: "all", label: "All Categories" },
-  { id: "price", label: "Price", icon: "payments" },
-  { id: "location", label: "Location", icon: "location_on" },
-  { id: "breed", label: "Breed", icon: "pets" },
-  { id: "verified", label: "Verified Only", icon: "verified" },
+export interface PriceRange {
+  id: string
+  label: string
+  minPrice?: number
+  maxPrice?: number
+}
+
+export const PRICE_RANGES: PriceRange[] = [
+  { id: "any", label: "Any Price" },
+  { id: "under_200k", label: "Under UGX 200,000", maxPrice: 200000 },
+  { id: "200k_500k", label: "UGX 200,000 – 500,000", minPrice: 200000, maxPrice: 500000 },
+  { id: "500k_1m", label: "UGX 500,000 – 1,000,000", minPrice: 500000, maxPrice: 1000000 },
+  { id: "over_1m", label: "Over UGX 1,000,000", minPrice: 1000000 },
+  { id: "custom", label: "Custom Range" },
 ]
